@@ -35,6 +35,7 @@
 
 #include "rdvarint.h"
 #include "rdbuf.h"
+#include "rdstringbuilder.h"
 #include "crc32c.h"
 #include "rdmurmur2.h"
 #include "rdfnv1a.h"
@@ -49,6 +50,9 @@
 #include "rdkafka_sasl_oauthbearer.h"
 #include "rdkafka_msgset.h"
 #include "rdkafka_txnmgr.h"
+#if WITH_SASL_AWS_MSK_IAM
+#include "rdkafka_sasl_aws_msk_iam.h"
+#endif
 
 rd_bool_t rd_unittest_assert_on_failure = rd_false;
 rd_bool_t rd_unittest_on_ci             = rd_false;
@@ -410,8 +414,9 @@ static int unittest_rdclock(void) {
 
 /**@}*/
 
-extern int unittest_string(void);
-extern int unittest_cgrp(void);
+extern int unittest_string (void);
+extern int unittest_cgrp (void);
+extern int unittest_stringbuilder (void);
 #if WITH_SASL_SCRAM
 extern int unittest_scram(void);
 #endif
@@ -419,6 +424,9 @@ extern int unittest_assignors(void);
 extern int unittest_map(void);
 #if WITH_CURL
 extern int unittest_http(void);
+#endif
+#if WITH_SASL_AWS_MSK_IAM
+extern int unittest_aws_msk_iam (void);
 #endif
 
 int rd_unittest(void) {
@@ -457,7 +465,12 @@ int rd_unittest(void) {
 #if WITH_CURL
                 {"http", unittest_http},
 #endif
-                {NULL}
+#if WITH_SASL_AWS_MSK_IAM
+                { "sasl_aws_msk_iam", unittest_aws_msk_iam },
+#endif
+                
+                { "stringbuilder",  unittest_stringbuilder },
+                { NULL }
         };
         int i;
         const char *match = rd_getenv("RD_UT_TEST", NULL);

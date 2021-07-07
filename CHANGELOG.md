@@ -106,6 +106,8 @@ librdkafka v1.8.0 is a security release:
  * Producer `flush()` now overrides the `linger.ms` setting for the duration
    of the `flush()` call, effectively triggering immediate transmission of
    queued messages. (#3489)
+ * Added `AWS_MSK_IAM` to supported `sasl.mechanisms`. This feature
+  provides support for using IAM authentication on AWS MSK clusters. (@garrett528, #3402)
 
 ## Fixes
 

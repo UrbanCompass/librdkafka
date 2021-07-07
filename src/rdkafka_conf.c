@@ -298,7 +298,7 @@ rd_kafka_conf_validate_broker_version(const struct rd_kafka_property *prop,
 }
 
 /**
- * @brief Validate that string is a single item, without delimters (, space).
+ * @brief Validate that string is a single item, without delimiters (, space).
  */
 static RD_UNUSED int
 rd_kafka_conf_validate_single(const struct rd_kafka_property *prop,
@@ -346,172 +346,191 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
               .unsupported = "libdl/dlopen(3) not available at "
                              "build time"
 #endif
-             },
-             {0x400, "zstd", _UNSUPPORTED_ZSTD},
-             {0x800, "sasl_oauthbearer", _UNSUPPORTED_SSL},
-             {0x1000, "http", _UNSUPPORTED_HTTP},
-             {0x2000, "oidc", _UNSUPPORTED_OIDC},
-             {0, NULL}}},
-    {_RK_GLOBAL, "client.id", _RK_C_STR, _RK(client_id_str),
-     "Client identifier.", .sdef = "rdkafka"},
-    {_RK_GLOBAL | _RK_HIDDEN, "client.software.name", _RK_C_STR, _RK(sw_name),
-     "Client software name as reported to broker version >= v2.4.0. "
-     "Broker-side character restrictions apply, as of broker version "
-     "v2.4.0 the allowed characters are `a-zA-Z0-9.-`. The local client "
-     "will replace any other character with `-` and strip leading and "
-     "trailing non-alphanumeric characters before tranmission to "
-     "the broker. "
-     "This property should only be set by high-level language "
-     "librdkafka client bindings.",
-     .sdef = "librdkafka"},
-    {
-        _RK_GLOBAL | _RK_HIDDEN,
-        "client.software.version",
-        _RK_C_STR,
-        _RK(sw_version),
-        "Client software version as reported to broker version >= v2.4.0. "
-        "Broker-side character restrictions apply, as of broker version "
-        "v2.4.0 the allowed characters are `a-zA-Z0-9.-`. The local client "
-        "will replace any other character with `-` and strip leading and "
-        "trailing non-alphanumeric characters before tranmission to "
-        "the broker. "
-        "This property should only be set by high-level language "
-        "librdkafka client bindings."
-        "If changing this property it is highly recommended to append the "
-        "librdkafka version.",
-    },
-    {_RK_GLOBAL | _RK_HIGH, "metadata.broker.list", _RK_C_STR, _RK(brokerlist),
-     "Initial list of brokers as a CSV list of broker host or host:port. "
-     "The application may also use `rd_kafka_brokers_add()` to add "
-     "brokers during runtime."},
-    {_RK_GLOBAL | _RK_HIGH, "bootstrap.servers", _RK_C_ALIAS, 0,
-     "See metadata.broker.list", .sdef = "metadata.broker.list"},
-    {_RK_GLOBAL | _RK_MED, "message.max.bytes", _RK_C_INT, _RK(max_msg_size),
-     "Maximum Kafka protocol request message size. "
-     "Due to differing framing overhead between protocol versions the "
-     "producer is unable to reliably enforce a strict max message limit "
-     "at produce time and may exceed the maximum size by one message in "
-     "protocol ProduceRequests, the broker will enforce the the topic's "
-     "`max.message.bytes` limit (see Apache Kafka documentation).",
-     1000, 1000000000, 1000000},
-    {_RK_GLOBAL, "message.copy.max.bytes", _RK_C_INT, _RK(msg_copy_max_size),
-     "Maximum size for message to be copied to buffer. "
-     "Messages larger than this will be passed by reference (zero-copy) "
-     "at the expense of larger iovecs.",
-     0, 1000000000, 0xffff},
-    {_RK_GLOBAL | _RK_MED, "receive.message.max.bytes", _RK_C_INT,
-     _RK(recv_max_msg_size),
-     "Maximum Kafka protocol response message size. "
-     "This serves as a safety precaution to avoid memory exhaustion in "
-     "case of protocol hickups. "
-     "This value must be at least `fetch.max.bytes`  + 512 to allow "
-     "for protocol overhead; the value is adjusted automatically "
-     "unless the configuration property is explicitly set.",
-     1000, INT_MAX, 100000000},
-    {_RK_GLOBAL, "max.in.flight.requests.per.connection", _RK_C_INT,
-     _RK(max_inflight),
-     "Maximum number of in-flight requests per broker connection. "
-     "This is a generic property applied to all broker communication, "
-     "however it is primarily relevant to produce requests. "
-     "In particular, note that other mechanisms limit the number "
-     "of outstanding consumer fetch request per broker to one.",
-     1, 1000000, 1000000},
-    {_RK_GLOBAL, "max.in.flight", _RK_C_ALIAS,
-     .sdef = "max.in.flight.requests.per.connection"},
-    {_RK_GLOBAL | _RK_DEPRECATED | _RK_HIDDEN, "metadata.request.timeout.ms",
-     _RK_C_INT, _RK(metadata_request_timeout_ms), "Not used.", 10, 900 * 1000,
-     10},
-    {_RK_GLOBAL, "topic.metadata.refresh.interval.ms", _RK_C_INT,
-     _RK(metadata_refresh_interval_ms),
-     "Period of time in milliseconds at which topic and broker "
-     "metadata is refreshed in order to proactively discover any new "
-     "brokers, topics, partitions or partition leader changes. "
-     "Use -1 to disable the intervalled refresh (not recommended). "
-     "If there are no locally referenced topics "
-     "(no topic objects created, no messages produced, "
-     "no subscription or no assignment) then only the broker list will "
-     "be refreshed every interval but no more often than every 10s.",
-     -1, 3600 * 1000, 5 * 60 * 1000},
-    {_RK_GLOBAL, "metadata.max.age.ms", _RK_C_INT, _RK(metadata_max_age_ms),
-     "Metadata cache max age. "
-     "Defaults to topic.metadata.refresh.interval.ms * 3",
-     1, 24 * 3600 * 1000, 5 * 60 * 1000 * 3},
-    {_RK_GLOBAL, "topic.metadata.refresh.fast.interval.ms", _RK_C_INT,
-     _RK(metadata_refresh_fast_interval_ms),
-     "When a topic loses its leader a new metadata request will be "
-     "enqueued with this initial interval, exponentially increasing "
-     "until the topic metadata has been refreshed. "
-     "This is used to recover quickly from transitioning leader brokers.",
-     1, 60 * 1000, 250},
-    {_RK_GLOBAL | _RK_DEPRECATED, "topic.metadata.refresh.fast.cnt", _RK_C_INT,
-     _RK(metadata_refresh_fast_cnt), "No longer used.", 0, 1000, 10},
-    {_RK_GLOBAL, "topic.metadata.refresh.sparse", _RK_C_BOOL,
-     _RK(metadata_refresh_sparse),
-     "Sparse metadata requests (consumes less network bandwidth)", 0, 1, 1},
-    {_RK_GLOBAL, "topic.metadata.propagation.max.ms", _RK_C_INT,
-     _RK(metadata_propagation_max_ms),
-     "Apache Kafka topic creation is asynchronous and it takes some "
-     "time for a new topic to propagate throughout the cluster to all "
-     "brokers. "
-     "If a client requests topic metadata after manual topic creation but "
-     "before the topic has been fully propagated to the broker the "
-     "client is requesting metadata from, the topic will seem to be "
-     "non-existent and the client will mark the topic as such, "
-     "failing queued produced messages with `ERR__UNKNOWN_TOPIC`. "
-     "This setting delays marking a topic as non-existent until the "
-     "configured propagation max time has passed. "
-     "The maximum propagation time is calculated from the time the "
-     "topic is first referenced in the client, e.g., on produce().",
-     0, 60 * 60 * 1000, 30 * 1000},
-    {_RK_GLOBAL, "topic.blacklist", _RK_C_PATLIST, _RK(topic_blacklist),
-     "Topic blacklist, a comma-separated list of regular expressions "
-     "for matching topic names that should be ignored in "
-     "broker metadata information as if the topics did not exist."},
-    {_RK_GLOBAL | _RK_MED, "debug", _RK_C_S2F, _RK(debug),
-     "A comma-separated list of debug contexts to enable. "
-     "Detailed Producer debugging: broker,topic,msg. "
-     "Consumer: consumer,cgrp,topic,fetch",
-     .s2i = {{RD_KAFKA_DBG_GENERIC, "generic"},
-             {RD_KAFKA_DBG_BROKER, "broker"},
-             {RD_KAFKA_DBG_TOPIC, "topic"},
-             {RD_KAFKA_DBG_METADATA, "metadata"},
-             {RD_KAFKA_DBG_FEATURE, "feature"},
-             {RD_KAFKA_DBG_QUEUE, "queue"},
-             {RD_KAFKA_DBG_MSG, "msg"},
-             {RD_KAFKA_DBG_PROTOCOL, "protocol"},
-             {RD_KAFKA_DBG_CGRP, "cgrp"},
-             {RD_KAFKA_DBG_SECURITY, "security"},
-             {RD_KAFKA_DBG_FETCH, "fetch"},
-             {RD_KAFKA_DBG_INTERCEPTOR, "interceptor"},
-             {RD_KAFKA_DBG_PLUGIN, "plugin"},
-             {RD_KAFKA_DBG_CONSUMER, "consumer"},
-             {RD_KAFKA_DBG_ADMIN, "admin"},
-             {RD_KAFKA_DBG_EOS, "eos"},
-             {RD_KAFKA_DBG_MOCK, "mock"},
-             {RD_KAFKA_DBG_ASSIGNOR, "assignor"},
-             {RD_KAFKA_DBG_CONF, "conf"},
-             {RD_KAFKA_DBG_ALL, "all"}}},
-    {_RK_GLOBAL, "socket.timeout.ms", _RK_C_INT, _RK(socket_timeout_ms),
-     "Default timeout for network requests. "
-     "Producer: ProduceRequests will use the lesser value of "
-     "`socket.timeout.ms` and remaining `message.timeout.ms` for the "
-     "first message in the batch. "
-     "Consumer: FetchRequests will use "
-     "`fetch.wait.max.ms` + `socket.timeout.ms`. "
-     "Admin: Admin requests will use `socket.timeout.ms` or explicitly "
-     "set `rd_kafka_AdminOptions_set_operation_timeout()` value.",
-     10, 300 * 1000, 60 * 1000},
-    {_RK_GLOBAL | _RK_DEPRECATED, "socket.blocking.max.ms", _RK_C_INT,
-     _RK(socket_blocking_max_ms), "No longer used.", 1, 60 * 1000, 1000},
-    {_RK_GLOBAL, "socket.send.buffer.bytes", _RK_C_INT, _RK(socket_sndbuf_size),
-     "Broker socket send buffer size. System default is used if 0.", 0,
-     100000000, 0},
-    {_RK_GLOBAL, "socket.receive.buffer.bytes", _RK_C_INT,
-     _RK(socket_rcvbuf_size),
-     "Broker socket receive buffer size. System default is used if 0.", 0,
-     100000000, 0},
-    {_RK_GLOBAL, "socket.keepalive.enable", _RK_C_BOOL, _RK(socket_keepalive),
-     "Enable TCP keep-alives (SO_KEEPALIVE) on broker sockets", 0, 1, 0
+                        },
+                        { 0x400, "zstd", _UNSUPPORTED_ZSTD },
+                        { 0x800, "sasl_oauthbearer", _UNSUPPORTED_SSL },
+                        { 0x1000, "sasl_aws_msk_iam", _UNSUPPORTED_SSL },
+                        { 0, NULL }
+                }
+	},
+	{ _RK_GLOBAL, "client.id", _RK_C_STR, _RK(client_id_str),
+	  "Client identifier.",
+	  .sdef =  "rdkafka" },
+        { _RK_GLOBAL|_RK_HIDDEN, "client.software.name", _RK_C_STR,
+          _RK(sw_name),
+          "Client software name as reported to broker version >= v2.4.0. "
+          "Broker-side character restrictions apply, as of broker version "
+          "v2.4.0 the allowed characters are `a-zA-Z0-9.-`. The local client "
+          "will replace any other character with `-` and strip leading and "
+          "trailing non-alphanumeric characters before tranmission to "
+          "the broker. "
+          "This property should only be set by high-level language "
+          "librdkafka client bindings.",
+          .sdef = "librdkafka"
+        },
+        { _RK_GLOBAL|_RK_HIDDEN, "client.software.version", _RK_C_STR,
+          _RK(sw_version),
+          "Client software version as reported to broker version >= v2.4.0. "
+          "Broker-side character restrictions apply, as of broker version "
+          "v2.4.0 the allowed characters are `a-zA-Z0-9.-`. The local client "
+          "will replace any other character with `-` and strip leading and "
+          "trailing non-alphanumeric characters before tranmission to "
+          "the broker. "
+          "This property should only be set by high-level language "
+          "librdkafka client bindings."
+          "If changing this property it is highly recommended to append the "
+          "librdkafka version.",
+        },
+	{ _RK_GLOBAL|_RK_HIGH, "metadata.broker.list", _RK_C_STR,
+          _RK(brokerlist),
+	  "Initial list of brokers as a CSV list of broker host or host:port. "
+	  "The application may also use `rd_kafka_brokers_add()` to add "
+	  "brokers during runtime." },
+	{ _RK_GLOBAL|_RK_HIGH, "bootstrap.servers", _RK_C_ALIAS, 0,
+	  "See metadata.broker.list",
+	  .sdef = "metadata.broker.list" },
+        { _RK_GLOBAL|_RK_MED, "message.max.bytes", _RK_C_INT, _RK(max_msg_size),
+          "Maximum Kafka protocol request message size. "
+          "Due to differing framing overhead between protocol versions the "
+          "producer is unable to reliably enforce a strict max message limit "
+          "at produce time and may exceed the maximum size by one message in "
+          "protocol ProduceRequests, the broker will enforce the the topic's "
+          "`max.message.bytes` limit (see Apache Kafka documentation).",
+          1000, 1000000000, 1000000 },
+	{ _RK_GLOBAL, "message.copy.max.bytes", _RK_C_INT,
+	  _RK(msg_copy_max_size),
+	  "Maximum size for message to be copied to buffer. "
+	  "Messages larger than this will be passed by reference (zero-copy) "
+	  "at the expense of larger iovecs.",
+	  0, 1000000000, 0xffff },
+	{ _RK_GLOBAL|_RK_MED, "receive.message.max.bytes", _RK_C_INT,
+          _RK(recv_max_msg_size),
+          "Maximum Kafka protocol response message size. "
+          "This serves as a safety precaution to avoid memory exhaustion in "
+          "case of protocol hickups. "
+          "This value must be at least `fetch.max.bytes`  + 512 to allow "
+          "for protocol overhead; the value is adjusted automatically "
+          "unless the configuration property is explicitly set.",
+	  1000, INT_MAX, 100000000 },
+	{ _RK_GLOBAL, "max.in.flight.requests.per.connection", _RK_C_INT,
+	  _RK(max_inflight),
+	  "Maximum number of in-flight requests per broker connection. "
+	  "This is a generic property applied to all broker communication, "
+	  "however it is primarily relevant to produce requests. "
+	  "In particular, note that other mechanisms limit the number "
+	  "of outstanding consumer fetch request per broker to one.",
+	  1, 1000000, 1000000 },
+        { _RK_GLOBAL, "max.in.flight", _RK_C_ALIAS,
+          .sdef = "max.in.flight.requests.per.connection" },
+        { _RK_GLOBAL|_RK_DEPRECATED|_RK_HIDDEN,
+          "metadata.request.timeout.ms", _RK_C_INT,
+          _RK(metadata_request_timeout_ms),
+          "Not used.",
+          10, 900*1000, 10 },
+        { _RK_GLOBAL, "topic.metadata.refresh.interval.ms", _RK_C_INT,
+          _RK(metadata_refresh_interval_ms),
+          "Period of time in milliseconds at which topic and broker "
+          "metadata is refreshed in order to proactively discover any new "
+          "brokers, topics, partitions or partition leader changes. "
+          "Use -1 to disable the intervalled refresh (not recommended). "
+          "If there are no locally referenced topics "
+          "(no topic objects created, no messages produced, "
+          "no subscription or no assignment) then only the broker list will "
+          "be refreshed every interval but no more often than every 10s.",
+          -1, 3600*1000, 5*60*1000 },
+	{ _RK_GLOBAL, "metadata.max.age.ms", _RK_C_INT,
+          _RK(metadata_max_age_ms),
+          "Metadata cache max age. "
+          "Defaults to topic.metadata.refresh.interval.ms * 3",
+          1, 24*3600*1000, 5*60*1000 * 3 },
+        { _RK_GLOBAL, "topic.metadata.refresh.fast.interval.ms", _RK_C_INT,
+          _RK(metadata_refresh_fast_interval_ms),
+          "When a topic loses its leader a new metadata request will be "
+          "enqueued with this initial interval, exponentially increasing "
+          "until the topic metadata has been refreshed. "
+          "This is used to recover quickly from transitioning leader brokers.",
+          1, 60*1000, 250 },
+        { _RK_GLOBAL|_RK_DEPRECATED,
+          "topic.metadata.refresh.fast.cnt", _RK_C_INT,
+          _RK(metadata_refresh_fast_cnt),
+          "No longer used.",
+          0, 1000, 10 },
+        { _RK_GLOBAL, "topic.metadata.refresh.sparse", _RK_C_BOOL,
+          _RK(metadata_refresh_sparse),
+          "Sparse metadata requests (consumes less network bandwidth)",
+          0, 1, 1 },
+        { _RK_GLOBAL, "topic.metadata.propagation.max.ms", _RK_C_INT,
+          _RK(metadata_propagation_max_ms),
+          "Apache Kafka topic creation is asynchronous and it takes some "
+          "time for a new topic to propagate throughout the cluster to all "
+          "brokers. "
+          "If a client requests topic metadata after manual topic creation but "
+          "before the topic has been fully propagated to the broker the "
+          "client is requesting metadata from, the topic will seem to be "
+          "non-existent and the client will mark the topic as such, "
+          "failing queued produced messages with `ERR__UNKNOWN_TOPIC`. "
+          "This setting delays marking a topic as non-existent until the "
+          "configured propagation max time has passed. "
+          "The maximum propagation time is calculated from the time the "
+          "topic is first referenced in the client, e.g., on produce().",
+          0, 60*60*1000, 30*1000 },
+        { _RK_GLOBAL, "topic.blacklist", _RK_C_PATLIST,
+          _RK(topic_blacklist),
+          "Topic blacklist, a comma-separated list of regular expressions "
+          "for matching topic names that should be ignored in "
+          "broker metadata information as if the topics did not exist." },
+	{ _RK_GLOBAL|_RK_MED, "debug", _RK_C_S2F, _RK(debug),
+	  "A comma-separated list of debug contexts to enable. "
+          "Detailed Producer debugging: broker,topic,msg. "
+          "Consumer: consumer,cgrp,topic,fetch",
+	  .s2i = {
+                        { RD_KAFKA_DBG_GENERIC,  "generic" },
+			{ RD_KAFKA_DBG_BROKER,   "broker" },
+			{ RD_KAFKA_DBG_TOPIC,    "topic" },
+			{ RD_KAFKA_DBG_METADATA, "metadata" },
+                        { RD_KAFKA_DBG_FEATURE,  "feature" },
+			{ RD_KAFKA_DBG_QUEUE,    "queue" },
+			{ RD_KAFKA_DBG_MSG,      "msg" },
+			{ RD_KAFKA_DBG_PROTOCOL, "protocol" },
+                        { RD_KAFKA_DBG_CGRP,     "cgrp" },
+			{ RD_KAFKA_DBG_SECURITY, "security" },
+			{ RD_KAFKA_DBG_FETCH,    "fetch" },
+                        { RD_KAFKA_DBG_INTERCEPTOR, "interceptor" },
+                        { RD_KAFKA_DBG_PLUGIN,   "plugin" },
+                        { RD_KAFKA_DBG_CONSUMER, "consumer" },
+                        { RD_KAFKA_DBG_ADMIN,    "admin" },
+                        { RD_KAFKA_DBG_EOS,      "eos" },
+                        { RD_KAFKA_DBG_MOCK,     "mock" },
+                        { RD_KAFKA_DBG_ASSIGNOR, "assignor" },
+                        { RD_KAFKA_DBG_CONF,     "conf" },
+			{ RD_KAFKA_DBG_ALL,      "all" }
+		} },
+	{ _RK_GLOBAL, "socket.timeout.ms", _RK_C_INT, _RK(socket_timeout_ms),
+	  "Default timeout for network requests. "
+          "Producer: ProduceRequests will use the lesser value of "
+          "`socket.timeout.ms` and remaining `message.timeout.ms` for the "
+          "first message in the batch. "
+          "Consumer: FetchRequests will use "
+          "`fetch.wait.max.ms` + `socket.timeout.ms`. "
+          "Admin: Admin requests will use `socket.timeout.ms` or explicitly "
+          "set `rd_kafka_AdminOptions_set_operation_timeout()` value.",
+	  10, 300*1000, 60*1000 },
+        { _RK_GLOBAL|_RK_DEPRECATED, "socket.blocking.max.ms", _RK_C_INT,
+          _RK(socket_blocking_max_ms),
+          "No longer used.",
+          1, 60*1000, 1000 },
+	{ _RK_GLOBAL, "socket.send.buffer.bytes", _RK_C_INT,
+	  _RK(socket_sndbuf_size),
+	  "Broker socket send buffer size. System default is used if 0.",
+	  0, 100000000, 0 },
+	{ _RK_GLOBAL, "socket.receive.buffer.bytes", _RK_C_INT,
+	  _RK(socket_rcvbuf_size),
+	  "Broker socket receive buffer size. System default is used if 0.",
+	  0, 100000000, 0 },
+	{ _RK_GLOBAL, "socket.keepalive.enable", _RK_C_BOOL,
+	  _RK(socket_keepalive),
+          "Enable TCP keep-alives (SO_KEEPALIVE) on broker sockets",
+          0, 1, 0
 #ifndef SO_KEEPALIVE
      ,
      .unsupported = "SO_KEEPALIVE not available at build time"
@@ -901,6 +920,19 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
     {_RK_GLOBAL | _RK_HIGH | _RK_SENSITIVE, "sasl.password", _RK_C_STR,
      _RK(sasl.password),
      "SASL password for use with the PLAIN and SASL-SCRAM-.. mechanism"},
+    {_RK_GLOBAL|_RK_HIGH|_RK_SENSITIVE, "sasl.aws.access.key.id", _RK_C_STR,
+     _RK(sasl.aws_access_key_id),
+     "SASL AWS access key id for use with the AWS_MSK_IAM mechanism" },
+    {_RK_GLOBAL|_RK_HIGH|_RK_SENSITIVE, "sasl.aws.secret.access.key", _RK_C_STR,
+     _RK(sasl.aws_secret_access_key),
+     "SASL AWS secret access key for use with the AWS_MSK_IAM mechanism" },
+    {_RK_GLOBAL|_RK_HIGH|_RK_SENSITIVE, "sasl.aws.region", _RK_C_STR,
+     _RK(sasl.aws_region),
+     "SASL AWS region for use with the AWS_MSK_IAM mechanism" },
+    {_RK_GLOBAL|_RK_HIGH|_RK_SENSITIVE, "sasl.aws.security.token", _RK_C_STR,
+     _RK(sasl.aws_security_token),
+     "SASL AWS security for use with the AWS_MSK_IAM mechanism if using "
+     "STS (temp) credentials" },
     {_RK_GLOBAL | _RK_SENSITIVE, "sasl.oauthbearer.config", _RK_C_STR,
      _RK(sasl.oauthbearer_config),
      "SASL/OAUTHBEARER configuration. The format is "
