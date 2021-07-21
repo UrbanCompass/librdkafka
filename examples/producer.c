@@ -87,17 +87,23 @@ int main (int argc, char **argv) {
         char buf[512];          /* Message value temporary buffer */
         const char *brokers;    /* Argument: broker list */
         const char *topic;      /* Argument: topic to produce to */
+        const char *aws_access_key_id;
+        const char *aws_secret_access_key;
+        const char *aws_region;
 
         /*
          * Argument validation
          */
-        if (argc != 3) {
+        if (argc != 6) {
                 fprintf(stderr, "%% Usage: %s <broker> <topic>\n", argv[0]);
                 return 1;
         }
 
         brokers = argv[1];
         topic   = argv[2];
+        aws_access_key_id = argv[3];
+        aws_secret_access_key = argv[4];
+        aws_region = argv[5];
 
 
         /*
@@ -110,6 +116,42 @@ int main (int argc, char **argv) {
          * librdkafka will use the bootstrap brokers to acquire the full
          * set of brokers from the cluster. */
         if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (rd_kafka_conf_set(conf, "security.protocol", "SASL_SSL",
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (rd_kafka_conf_set(conf, "sasl.mechanisms", "AWS_MSK_IAM",
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (rd_kafka_conf_set(conf, "sasl.aws.access.key.id", aws_access_key_id,
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (rd_kafka_conf_set(conf, "sasl.aws.secret.access.key", aws_secret_access_key,
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (rd_kafka_conf_set(conf, "sasl.aws.region", aws_region,
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (rd_kafka_conf_set(conf, "debug", "all",
                               errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 return 1;
