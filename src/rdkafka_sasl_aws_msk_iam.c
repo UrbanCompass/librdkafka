@@ -581,13 +581,6 @@ static void rd_kafka_sasl_aws_msk_iam_close (rd_kafka_transport_t *rktrans) {
         if (!state)
                 return;
          
-        RD_IF_FREE(state->ymd, rd_free);
-        RD_IF_FREE(state->hms, rd_free);
-        RD_IF_FREE(state->hostname.ptr, rd_free);
-        RD_IF_FREE(state->aws_access_key_id.ptr, rd_free);
-        RD_IF_FREE(state->aws_secret_access_key.ptr, rd_free);
-        RD_IF_FREE(state->aws_region.ptr, rd_free);
-        rd_free((void *)state->md);
         rd_free(state);
 }
 
