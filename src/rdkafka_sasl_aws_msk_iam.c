@@ -91,7 +91,7 @@ static rd_chariov_t rd_construct_amz_date (const char *ymd, const char *hms) {
  * @remark amz_credential.ptr will be allocated and must be freed.
  */
 static rd_chariov_t rd_construct_amz_credential (const rd_chariov_t aws_region, const char *ymd) {
-        const char aws_req[27] = "kafka-cluster/aws4_request";
+        const char *aws_req = "kafka-cluster/aws4_request";
         int credential_size = strlen(ymd) + 
                 aws_region.size + strlen(aws_req) + strlen("//") + 1;
         char *credential_buf;

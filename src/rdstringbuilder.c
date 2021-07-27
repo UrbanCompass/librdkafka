@@ -90,7 +90,11 @@ static void str_builder_ensure_space(str_builder_t *sb, size_t add_len)
             sb->alloced--;
         }
     }
-    sb->str = realloc(sb->str, sb->alloced);
+    char *tmp = realloc(sb->str, sb->alloced);
+    if (tmp)   
+        sb->str = tmp;
+    else
+        exit(1);
 }
 
 void str_builder_add_str(str_builder_t *sb, const char *str, size_t len)
