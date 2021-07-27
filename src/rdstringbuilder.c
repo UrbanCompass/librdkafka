@@ -104,13 +104,12 @@ static void str_builder_ensure_space (str_builder_t *sb, size_t add_len)
 }
 
 
-void str_builder_add_str (str_builder_t *sb, const char *str, size_t len)
+void str_builder_add_str (str_builder_t *sb, const char *str)
 {
     if (sb == NULL || str == NULL || *str == '\0')
         return;
 
-    if (len == 0)
-        len = strlen(str);
+    size_t len = strlen(str);
 
     str_builder_ensure_space(sb, len);
     memmove(sb->str+sb->len, str, len);
@@ -186,12 +185,12 @@ static int unittest_build_string (void) {
     RD_UT_BEGIN();
     str_builder_t *sb;
     sb = str_builder_create();
-    str_builder_add_str(sb, "AWS4", 0);
+    str_builder_add_str(sb, "AWS4");
     RD_UT_ASSERT(4 == str_builder_len(sb), "expected: %d\nactual: %d", 4, (int)str_builder_len(sb));
     RD_UT_ASSERT(strcmp("AWS4", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "AWS4", str_builder_peek(sb));
     
     str_builder_clear(sb);
-    str_builder_add_str(sb, "TEST1", 0);
+    str_builder_add_str(sb, "TEST1");
     RD_UT_ASSERT(5 == str_builder_len(sb), "expected: %d\nactual: %d", 5, (int)str_builder_len(sb));
     RD_UT_ASSERT(strcmp("TEST1", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "TEST1", str_builder_peek(sb));
     

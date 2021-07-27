@@ -44,10 +44,8 @@ void str_builder_destroy(str_builder_t *sb);
  *
  * param[in,out] sb  Builder.
  * param[in]     str String to add.
- * param[in]     len Length of string to add. If 0, strlen will be called
- *                internally to determine length.
  */
-void str_builder_add_str(str_builder_t *sb, const char *str, size_t len);
+void str_builder_add_str(str_builder_t *sb, const char *str);
 
 /** Clear the builder.
  *

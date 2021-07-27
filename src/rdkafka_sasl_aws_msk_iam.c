@@ -180,18 +180,18 @@ static char *rd_kafka_sasl_aws_msk_iam_build_canonical_query_string (
         
         str_builder_t *sb;
         sb = str_builder_create();
-        str_builder_add_str(sb, "Action=", 0);
-        str_builder_add_str(sb, uri_action, 0);
-        str_builder_add_str(sb, "&", 0);
-        str_builder_add_str(sb, "X-Amz-Algorithm=AWS4-HMAC-SHA256&", 0);
-        str_builder_add_str(sb, "X-Amz-Credential=", 0);
-        str_builder_add_str(sb, uri_credential, 0);
-        str_builder_add_str(sb, "&", 0);
-        str_builder_add_str(sb, "X-Amz-Date=", 0);
-        str_builder_add_str(sb, uri_amz_date, 0);
-        str_builder_add_str(sb, "&", 0);
-        str_builder_add_str(sb, "X-Amz-Expires=900&", 0);  // AWS recommends 900 seconds
-        str_builder_add_str(sb, "X-Amz-SignedHeaders=host", 0);
+        str_builder_add_str(sb, "Action=");
+        str_builder_add_str(sb, uri_action);
+        str_builder_add_str(sb, "&");
+        str_builder_add_str(sb, "X-Amz-Algorithm=AWS4-HMAC-SHA256&");
+        str_builder_add_str(sb, "X-Amz-Credential=");
+        str_builder_add_str(sb, uri_credential);
+        str_builder_add_str(sb, "&");
+        str_builder_add_str(sb, "X-Amz-Date=");
+        str_builder_add_str(sb, uri_amz_date);
+        str_builder_add_str(sb, "&");
+        str_builder_add_str(sb, "X-Amz-Expires=900&");  // AWS recommends 900 seconds
+        str_builder_add_str(sb, "X-Amz-SignedHeaders=host");
         
         char *canonical_query_string = str_builder_dump(sb);
         
@@ -241,15 +241,15 @@ static char *rd_kafka_sasl_aws_msk_iam_build_canonical_request (struct rd_kafka_
         
         str_builder_t *sb;
         sb = str_builder_create();
-        str_builder_add_str(sb, "GET\n", 0);
-        str_builder_add_str(sb, "/\n", 0);
-        str_builder_add_str(sb, canonical_query_string, 0);
-        str_builder_add_str(sb, "\n", 0);
-        str_builder_add_str(sb, canonical_header_buf, 0);
-        str_builder_add_str(sb, "\n", 0);
-        str_builder_add_str(sb, signed_headers, 0);
-        str_builder_add_str(sb, "\n", 0);
-        str_builder_add_str(sb, res_hexstring, 0);
+        str_builder_add_str(sb, "GET\n");
+        str_builder_add_str(sb, "/\n");
+        str_builder_add_str(sb, canonical_query_string);
+        str_builder_add_str(sb, "\n");
+        str_builder_add_str(sb, canonical_header_buf);
+        str_builder_add_str(sb, "\n");
+        str_builder_add_str(sb, signed_headers);
+        str_builder_add_str(sb, "\n");
+        str_builder_add_str(sb, res_hexstring);
         
         char *canonical_request = str_builder_dump(sb);
         
@@ -286,18 +286,18 @@ static char *rd_kafka_sasl_aws_msk_iam_calculate_signature (struct rd_kafka_sasl
         
         str_builder_t *sb;
         sb = str_builder_create();
-        str_builder_add_str(sb, "AWS4-HMAC-SHA256\n", 0);
-        str_builder_add_str(sb, amz_date.ptr, 0);
-        str_builder_add_str(sb, "\n", 0);
-        str_builder_add_str(sb, credential_wo_prefix.ptr, 0);
-        str_builder_add_str(sb, "\n", 0);
-        str_builder_add_str(sb, hex_sha_canonical_request, 0);
+        str_builder_add_str(sb, "AWS4-HMAC-SHA256\n");
+        str_builder_add_str(sb, amz_date.ptr);
+        str_builder_add_str(sb, "\n");
+        str_builder_add_str(sb, credential_wo_prefix.ptr);
+        str_builder_add_str(sb, "\n");
+        str_builder_add_str(sb, hex_sha_canonical_request);
         char *string_to_sign = str_builder_dump(sb);
 //        printf("StringToSign:\n%s\n", string_to_sign);
         
         str_builder_clear(sb);
-        str_builder_add_str(sb, "AWS4", 0);
-        str_builder_add_str(sb, state->aws_secret_access_key.ptr, 0);
+        str_builder_add_str(sb, "AWS4");
+        str_builder_add_str(sb, state->aws_secret_access_key.ptr);
         char *date_key = str_builder_dump(sb);
         
         str_builder_destroy(sb);
@@ -350,24 +350,24 @@ static char *rd_kafka_sasl_aws_msk_iam_build_request_json (
         /* Construct JSON payload */
         str_builder_t *sb;
         sb = str_builder_create();
-        str_builder_add_str(sb, "{\"version\":\"2020_10_22\",", 0);
-        str_builder_add_str(sb, "\"host\":\"", 0);
-        str_builder_add_str(sb, hostname, 0);
-        str_builder_add_str(sb, "\",", 0);
-        str_builder_add_str(sb, "\"user-agent\":\"librdkafka\",", 0);
-        str_builder_add_str(sb, "\"action\":\"kafka-cluster:Connect\",", 0);
-        str_builder_add_str(sb, "\"x-amz-algorithm\":\"AWS4-HMAC-SHA256\",", 0);
-        str_builder_add_str(sb, "\"x-amz-credential\":\"", 0);
-        str_builder_add_str(sb, credential, 0);
-        str_builder_add_str(sb, "\",", 0);
-        str_builder_add_str(sb, "\"x-amz-date\":\"", 0);
-        str_builder_add_str(sb, amz_date_str, 0);
-        str_builder_add_str(sb, "\",", 0);
-        str_builder_add_str(sb, "\"x-amz-signedheaders\":\"host\",", 0);
-        str_builder_add_str(sb, "\"x-amz-expires\":\"900\",", 0);
-        str_builder_add_str(sb, "\"x-amz-signature\":\"", 0);
-        str_builder_add_str(sb, signature, 0);
-        str_builder_add_str(sb, "\"}", 0);
+        str_builder_add_str(sb, "{\"version\":\"2020_10_22\",");
+        str_builder_add_str(sb, "\"host\":\"");
+        str_builder_add_str(sb, hostname);
+        str_builder_add_str(sb, "\",");
+        str_builder_add_str(sb, "\"user-agent\":\"librdkafka\",");
+        str_builder_add_str(sb, "\"action\":\"kafka-cluster:Connect\",");
+        str_builder_add_str(sb, "\"x-amz-algorithm\":\"AWS4-HMAC-SHA256\",");
+        str_builder_add_str(sb, "\"x-amz-credential\":\"");
+        str_builder_add_str(sb, credential);
+        str_builder_add_str(sb, "\",");
+        str_builder_add_str(sb, "\"x-amz-date\":\"");
+        str_builder_add_str(sb, amz_date_str);
+        str_builder_add_str(sb, "\",");
+        str_builder_add_str(sb, "\"x-amz-signedheaders\":\"host\",");
+        str_builder_add_str(sb, "\"x-amz-expires\":\"900\",");
+        str_builder_add_str(sb, "\"x-amz-signature\":\"");
+        str_builder_add_str(sb, signature);
+        str_builder_add_str(sb, "\"}");
 
         char *sasl_payload = str_builder_dump(sb);
         str_builder_destroy(sb);
