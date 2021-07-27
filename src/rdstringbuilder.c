@@ -203,6 +203,11 @@ static int unittest_build_string (void) {
     RD_UT_ASSERT(1 == str_builder_len(sb), "expected: %d\nactual: %d", 1, (int)str_builder_len(sb));
     RD_UT_ASSERT(strcmp("S", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "S", str_builder_peek(sb));
     
+    char *out = str_builder_dump(sb);
+    RD_UT_ASSERT(1 == strlen(out), "expected: %d\nactual: %d", 1, (int)strlen(out));
+    RD_UT_ASSERT(strcmp("S", out) == 0, "expected: %s\nactual: %s", "S", out);
+    
+    RD_IF_FREE(out, rd_free);
     str_builder_destroy(sb);
     
     RD_UT_PASS();
