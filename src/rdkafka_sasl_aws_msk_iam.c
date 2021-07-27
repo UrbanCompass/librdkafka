@@ -293,7 +293,6 @@ static char *rd_kafka_sasl_aws_msk_iam_calculate_signature (struct rd_kafka_sasl
         str_builder_add_str(sb, "\n");
         str_builder_add_str(sb, hex_sha_canonical_request);
         char *string_to_sign = str_builder_dump(sb);
-//        printf("StringToSign:\n%s\n", string_to_sign);
         
         str_builder_clear(sb);
         str_builder_add_str(sb, "AWS4");
@@ -325,7 +324,6 @@ static char *rd_kafka_sasl_aws_msk_iam_calculate_signature (struct rd_kafka_sasl
         char res_hexstring[64];
         for (i = 0; i < hmac_signature_len; i++)
                sprintf(&(res_hexstring[i * 2]), "%02x", hmac_signature[i]);  // save string in hex base 16
-//        printf("Signature:\n%s\n", res_hexstring);
         
         char *signature = rd_strdup(res_hexstring);
         
