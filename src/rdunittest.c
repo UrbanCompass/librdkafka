@@ -35,6 +35,7 @@
 
 #include "rdvarint.h"
 #include "rdbuf.h"
+#include "rdstringbuilder.h"
 #include "crc32c.h"
 #include "rdmurmur2.h"
 #include "rdfnv1a.h"
@@ -442,6 +443,7 @@ static int unittest_rdclock (void) {
 
 extern int unittest_string (void);
 extern int unittest_cgrp (void);
+extern int unittest_stringbuilder (void);
 #if WITH_SASL_SCRAM
 extern int unittest_scram (void);
 #endif
@@ -457,15 +459,16 @@ int rd_unittest (void) {
                 const char *name;
                 int (*call) (void);
         } unittests[] = {
-                { "sysqueue",   unittest_sysqueue },
-                { "string",     unittest_string },
-                { "map",        unittest_map },
-                { "rdbuf",      unittest_rdbuf },
-                { "rdvarint",   unittest_rdvarint },
-                { "crc32c",     unittest_crc32c },
-                { "msg",        unittest_msg },
-                { "murmurhash", unittest_murmur2 },
-                { "fnv1a",      unittest_fnv1a },
+                { "sysqueue",       unittest_sysqueue },
+                { "string",         unittest_string },
+                { "map",            unittest_map },
+                { "rdbuf",          unittest_rdbuf },
+                { "rdvarint",       unittest_rdvarint },
+                { "stringbuilder",  unittest_stringbuilder },
+                { "crc32c",         unittest_crc32c },
+                { "msg",            unittest_msg },
+                { "murmurhash",     unittest_murmur2 },
+                { "fnv1a",          unittest_fnv1a },
 #if WITH_HDRHISTOGRAM
                 { "rdhdrhistogram", unittest_rdhdrhistogram },
 #endif

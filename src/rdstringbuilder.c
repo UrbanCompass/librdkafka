@@ -34,8 +34,11 @@
 
 #include "rdstringbuilder.h"
 #include "rd.h"
+#include "rdunittest.h"
+
 
 static const size_t str_builder_min_size = 32;
+
 
 struct str_builder {
     char   *str;
@@ -43,7 +46,8 @@ struct str_builder {
     size_t  len;
 };
 
-str_builder_t *str_builder_create(void)
+
+str_builder_t *str_builder_create (void)
 {
     str_builder_t *sb;
 
@@ -56,7 +60,8 @@ str_builder_t *str_builder_create(void)
     return sb;
 }
 
-void str_builder_destroy(str_builder_t *sb)
+
+void str_builder_destroy (str_builder_t *sb)
 {
     if (sb == NULL)
         return;
@@ -64,12 +69,13 @@ void str_builder_destroy(str_builder_t *sb)
     rd_free(sb);
 }
 
+
 /** Ensure there is enough space for data being added plus a NULL terminator.
  *
  * param[in,out] sb      Builder.
  * param[in]     add_len The length that needs to be added *not* including a NULL terminator.
  */
-static void str_builder_ensure_space(str_builder_t *sb, size_t add_len)
+static void str_builder_ensure_space (str_builder_t *sb, size_t add_len)
 {
     if (sb == NULL || add_len == 0)
         return;
@@ -97,7 +103,8 @@ static void str_builder_ensure_space(str_builder_t *sb, size_t add_len)
         exit(1);
 }
 
-void str_builder_add_str(str_builder_t *sb, const char *str, size_t len)
+
+void str_builder_add_str (str_builder_t *sb, const char *str, size_t len)
 {
     if (sb == NULL || str == NULL || *str == '\0')
         return;
@@ -111,35 +118,16 @@ void str_builder_add_str(str_builder_t *sb, const char *str, size_t len)
     sb->str[sb->len] = '\0';
 }
 
-void str_builder_add_char(str_builder_t *sb, char c)
-{
-    if (sb == NULL)
-        return;
-    str_builder_ensure_space(sb, 1);
-    sb->str[sb->len] = c;
-    sb->len++;
-    sb->str[sb->len] = '\0';
-}
 
-void str_builder_add_int(str_builder_t *sb, int val)
-{
-    char str[12];
-
-    if (sb == NULL)
-        return;
-
-    snprintf(str, sizeof(str), "%d", val);
-    str_builder_add_str(sb, str, 0);
-}
-
-void str_builder_clear(str_builder_t *sb)
+void str_builder_clear (str_builder_t *sb)
 {
     if (sb == NULL)
         return;
     str_builder_truncate(sb, 0);
 }
 
-void str_builder_truncate(str_builder_t *sb, size_t len)
+
+void str_builder_truncate (str_builder_t *sb, size_t len)
 {
     if (sb == NULL || len >= sb->len)
         return;
@@ -148,7 +136,8 @@ void str_builder_truncate(str_builder_t *sb, size_t len)
     sb->str[sb->len] = '\0';
 }
 
-void str_builder_drop(str_builder_t *sb, size_t len)
+
+void str_builder_drop (str_builder_t *sb, size_t len)
 {
     if (sb == NULL || len == 0)
         return;
@@ -163,30 +152,67 @@ void str_builder_drop(str_builder_t *sb, size_t len)
     memmove(sb->str, sb->str+len, sb->len+1);
 }
 
-size_t str_builder_len(const str_builder_t *sb)
+
+size_t str_builder_len (const str_builder_t *sb)
 {
     if (sb == NULL)
         return 0;
     return sb->len;
 }
 
-const char *str_builder_peek(const str_builder_t *sb)
+
+const char *str_builder_peek (const str_builder_t *sb)
 {
     if (sb == NULL)
         return NULL;
     return sb->str;
 }
 
-char *str_builder_dump(const str_builder_t *sb, size_t *len)
+
+char *str_builder_dump (const str_builder_t *sb)
 {
     char *out;
 
     if (sb == NULL)
         return NULL;
 
-    if (len != NULL)
-        *len = sb->len;
     out = malloc(sb->len+1);
     memcpy(out, sb->str, sb->len+1);
     return out;
+}
+
+
+static int unittest_build_string (void) {
+    RD_UT_BEGIN();
+    str_builder_t *sb;
+    sb = str_builder_create();
+    str_builder_add_str(sb, "AWS4", 0);
+    RD_UT_ASSERT(4 == str_builder_len(sb), "expected: %d\nactual: %d", 4, (int)str_builder_len(sb));
+    RD_UT_ASSERT(strcmp("AWS4", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "AWS4", str_builder_peek(sb));
+    
+    str_builder_clear(sb);
+    str_builder_add_str(sb, "TEST1", 0);
+    RD_UT_ASSERT(5 == str_builder_len(sb), "expected: %d\nactual: %d", 5, (int)str_builder_len(sb));
+    RD_UT_ASSERT(strcmp("TEST1", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "TEST1", str_builder_peek(sb));
+    
+    str_builder_drop(sb, 2);
+    RD_UT_ASSERT(3 == str_builder_len(sb), "expected: %d\nactual: %d", 3, (int)str_builder_len(sb));
+    RD_UT_ASSERT(strcmp("ST1", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "ST1", str_builder_peek(sb));
+    
+    str_builder_truncate(sb, 1);
+    RD_UT_ASSERT(1 == str_builder_len(sb), "expected: %d\nactual: %d", 1, (int)str_builder_len(sb));
+    RD_UT_ASSERT(strcmp("S", str_builder_peek(sb)) == 0, "expected: %s\nactual: %s", "S", str_builder_peek(sb));
+    
+    str_builder_destroy(sb);
+    
+    RD_UT_PASS();
+}
+
+
+int unittest_stringbuilder (void) {
+        int fails = 0;
+
+        fails += unittest_build_string();
+
+        return fails;
 }

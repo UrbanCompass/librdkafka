@@ -193,7 +193,7 @@ static char *rd_kafka_sasl_aws_msk_iam_build_canonical_query_string (
         str_builder_add_str(sb, "X-Amz-Expires=900&", 0);  // AWS recommends 900 seconds
         str_builder_add_str(sb, "X-Amz-SignedHeaders=host", 0);
         
-        char *canonical_query_string = str_builder_dump(sb, NULL);
+        char *canonical_query_string = str_builder_dump(sb);
         
         str_builder_destroy(sb);
         
@@ -251,7 +251,7 @@ static char *rd_kafka_sasl_aws_msk_iam_build_canonical_request (struct rd_kafka_
         str_builder_add_str(sb, "\n", 0);
         str_builder_add_str(sb, res_hexstring, 0);
         
-        char *canonical_request = str_builder_dump(sb, NULL);
+        char *canonical_request = str_builder_dump(sb);
         
         str_builder_destroy(sb);
         
@@ -292,13 +292,13 @@ static char *rd_kafka_sasl_aws_msk_iam_calculate_signature (struct rd_kafka_sasl
         str_builder_add_str(sb, credential_wo_prefix.ptr, 0);
         str_builder_add_str(sb, "\n", 0);
         str_builder_add_str(sb, hex_sha_canonical_request, 0);
-        char *string_to_sign = str_builder_dump(sb, NULL);
+        char *string_to_sign = str_builder_dump(sb);
 //        printf("StringToSign:\n%s\n", string_to_sign);
         
         str_builder_clear(sb);
         str_builder_add_str(sb, "AWS4", 0);
         str_builder_add_str(sb, state->aws_secret_access_key.ptr, 0);
-        char *date_key = str_builder_dump(sb, NULL);
+        char *date_key = str_builder_dump(sb);
         
         str_builder_destroy(sb);
         
@@ -369,7 +369,7 @@ static char *rd_kafka_sasl_aws_msk_iam_build_request_json (
         str_builder_add_str(sb, signature, 0);
         str_builder_add_str(sb, "\"}", 0);
 
-        char *sasl_payload = str_builder_dump(sb, NULL);
+        char *sasl_payload = str_builder_dump(sb);
         str_builder_destroy(sb);
         
         return sasl_payload;
@@ -602,6 +602,7 @@ const struct rd_kafka_sasl_provider rd_kafka_sasl_aws_msk_iam_provider = {
  * @brief Verify that a request JSON can be formed properly.
  */
 static int unittest_build_request_json (void) {
+        RD_UT_BEGIN();
         char *sasl_payload = rd_kafka_sasl_aws_msk_iam_build_request_json (
         "hostname",
         "AWS_ACCESS_KEY_ID/20100101/us-east-1/kafka-cluster/aws4_request",
@@ -626,6 +627,7 @@ static int unittest_build_request_json (void) {
  * @brief Verify that a signature can be calculated properly.
  */
 static int unittest_calculate_signature (void) {
+        RD_UT_BEGIN();
         int hostname_str_size = strlen("hostname") + 1;
         char *hostname_str;
         
@@ -665,7 +667,8 @@ static int unittest_calculate_signature (void) {
 /**
  * @brief Verify that a canonical request can be formed properly.
  */
-static int unittest_build_canonical_request (void) {        
+static int unittest_build_canonical_request (void) {       
+        RD_UT_BEGIN();
         int hostname_str_size = strlen("hostname") + 1;
         char *hostname_str;
         
@@ -711,6 +714,7 @@ static int unittest_build_canonical_request (void) {
  * @brief Verify that a uri encoding / escaping works as expected.
  */
 static int unittest_uri_encode (void) {
+        RD_UT_BEGIN();
         int test_str_size = strlen("testString-123/*&") + 1;
         char *test_str;
         

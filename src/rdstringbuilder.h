@@ -49,20 +49,6 @@ void str_builder_destroy(str_builder_t *sb);
  */
 void str_builder_add_str(str_builder_t *sb, const char *str, size_t len);
 
-/** Add a character to the builder.
- *
- * param[in,out] sb Builder.
- * param[in]     c  Character.
- */
-void str_builder_add_char(str_builder_t *sb, char c);
-
-/** Add an integer as to the builder.
- *
- * param[in,out] sb  Builder.
- * param[in]     val Int to add.
- */
-void str_builder_add_int(str_builder_t *sb, int val);
-
 /** Clear the builder.
  *
  * param[in,out] sb  Builder.
@@ -105,11 +91,12 @@ const char *str_builder_peek(const str_builder_t *sb);
 /** Return a copy of the string data.
  *
  * param[in]  sb  Builder.
- * param[out] len Length of returned data. Can be NULL if not needed.
  *
  * return Copy of the internal string data.
  */
-char *str_builder_dump(const str_builder_t *sb, size_t *len);
+char *str_builder_dump(const str_builder_t *sb);
 
+
+int unittest_stringbuilder (void);
 
 #endif /* _RDSTRINGBUILDER_H_ */
