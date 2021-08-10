@@ -982,6 +982,10 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
         { _RK_GLOBAL|_RK_HIGH|_RK_SENSITIVE, "sasl.aws.region", _RK_C_STR,
           _RK(sasl.aws_region),
           "SASL AWS region for use with the AWS_MSK_IAM mechanism" },
+        { _RK_GLOBAL|_RK_HIGH|_RK_SENSITIVE, "sasl.aws.security.token", _RK_C_STR,
+          _RK(sasl.aws_security_token),
+          "SASL AWS security for use with the AWS_MSK_IAM mechanism if using "
+          "STS (temp) credentials" },
         { _RK_GLOBAL|_RK_SENSITIVE, "sasl.oauthbearer.config", _RK_C_STR,
           _RK(sasl.oauthbearer_config),
           "SASL/OAUTHBEARER configuration. The format is "

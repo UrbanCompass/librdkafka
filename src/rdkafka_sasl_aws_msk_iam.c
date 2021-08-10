@@ -61,9 +61,10 @@ struct rd_kafka_sasl_aws_msk_iam_state {
         char ymd[9];  /* yyyyMMdd of request */
         char hms[7];  /* HHmmss of request */
         rd_chariov_t hostname;  /* hostname from client_new */
-        rd_chariov_t aws_access_key_id;  /* AWS_ACCESS_KEY_ID from env */
-        rd_chariov_t aws_secret_access_key;  /* AWS_SECRET_ACCESS_KEY from env */
-        rd_chariov_t aws_region;  /* AWS_REGION from env */
+        rd_chariov_t aws_access_key_id;  /* AWS access key id from conf */
+        rd_chariov_t aws_secret_access_key;  /* AWS secret access key from conf */
+        rd_chariov_t aws_region;  /* AWS region from conf */
+        rd_chariov_t aws_security_token;  /* AWS security token from conf (optional) */
         const EVP_MD *md;  /* hash function pointer */
 };
 
@@ -161,21 +162,17 @@ static unsigned char *rd_hmac_sha256 (const void *key, int keylen,
  * @brief Generates a canonical query string
  * @remark canonical_query_string will be allocated and must be freed.
  */
-static char *rd_kafka_sasl_aws_msk_iam_build_canonical_query_string (
-        rd_chariov_t aws_access_key_id, 
-        rd_chariov_t aws_region,
-        const char *ymd,
-        const char *hms) {
+static char *rd_kafka_sasl_aws_msk_iam_build_canonical_query_string (struct rd_kafka_sasl_aws_msk_iam_state *state) {    
         char *action_str = "kafka-cluster:Connect";
         rd_chariov_t action = 
                 { .ptr = action_str, .size = strlen(action_str) };
         char *uri_action = rd_uri_encode(action);
         
-        rd_chariov_t credential_wo_prefix = rd_construct_amz_credential(aws_region, ymd);
-        rd_chariov_t credential = rd_construct_amz_credential_add_key_prefix(credential_wo_prefix, aws_access_key_id);
+        rd_chariov_t credential_wo_prefix = rd_construct_amz_credential(state->aws_region, state->ymd);
+        rd_chariov_t credential = rd_construct_amz_credential_add_key_prefix(credential_wo_prefix, state->aws_access_key_id);
         char *uri_credential = rd_uri_encode(credential);
         
-        rd_chariov_t amz_date = rd_construct_amz_date(ymd, hms);
+        rd_chariov_t amz_date = rd_construct_amz_date(state->ymd, state->hms);
         char *uri_amz_date = rd_uri_encode(amz_date);
         
         str_builder_t *sb;
@@ -191,6 +188,17 @@ static char *rd_kafka_sasl_aws_msk_iam_build_canonical_query_string (
         str_builder_add_str(sb, uri_amz_date);
         str_builder_add_str(sb, "&");
         str_builder_add_str(sb, "X-Amz-Expires=900&");  // AWS recommends 900 seconds
+        
+        if (state->aws_security_token.ptr != NULL) {
+            char *uri_amz_security_token = rd_uri_encode(state->aws_security_token);
+            
+            str_builder_add_str(sb, "X-Amz-Security-Token=");
+            str_builder_add_str(sb, uri_amz_security_token);
+            str_builder_add_str(sb, "&");
+            
+            RD_IF_FREE(uri_amz_security_token, rd_free);
+        }
+        
         str_builder_add_str(sb, "X-Amz-SignedHeaders=host");
         
         char *canonical_query_string = str_builder_dump(sb);
@@ -213,11 +221,7 @@ static char *rd_kafka_sasl_aws_msk_iam_build_canonical_query_string (
  * @remark canonical_request will be allocated and must be freed.
  */
 static char *rd_kafka_sasl_aws_msk_iam_build_canonical_request (struct rd_kafka_sasl_aws_msk_iam_state *state) {
-        char *canonical_query_string = 
-            rd_kafka_sasl_aws_msk_iam_build_canonical_query_string(state->aws_access_key_id,
-                                                                   state->aws_region,
-                                                                   state->ymd,
-                                                                   state->hms);
+        char *canonical_query_string = rd_kafka_sasl_aws_msk_iam_build_canonical_query_string(state);
         const char *hostname = state->hostname.ptr;
         int canonical_header_size = strlen(hostname) + strlen("host:\n") + 1;
         char canonical_header_buf[256];
@@ -344,7 +348,8 @@ static char *rd_kafka_sasl_aws_msk_iam_build_request_json (
         char *hostname,
         char *credential,
         char *amz_date_str,
-        char *signature) {
+        char *signature,
+        char *security_token) {
         /* Construct JSON payload */
         str_builder_t *sb;
         sb = str_builder_create();
@@ -361,6 +366,13 @@ static char *rd_kafka_sasl_aws_msk_iam_build_request_json (
         str_builder_add_str(sb, "\"x-amz-date\":\"");
         str_builder_add_str(sb, amz_date_str);
         str_builder_add_str(sb, "\",");
+        
+        if (security_token != NULL) {
+            str_builder_add_str(sb, "\"x-amz-security-token\":\"");
+            str_builder_add_str(sb, security_token);
+            str_builder_add_str(sb, "\",");
+        }
+        
         str_builder_add_str(sb, "\"x-amz-signedheaders\":\"host\",");
         str_builder_add_str(sb, "\"x-amz-expires\":\"900\",");
         str_builder_add_str(sb, "\"x-amz-signature\":\"");
@@ -400,7 +412,7 @@ rd_kafka_sasl_aws_msk_iam_build_client_first_message (
         
         rd_chariov_t amz_date = rd_construct_amz_date((const char *)state->ymd, (const char *)state->hms);
 
-        char *sasl_payload = rd_kafka_sasl_aws_msk_iam_build_request_json(state->hostname.ptr, credential.ptr, amz_date.ptr, signature);
+        char *sasl_payload = rd_kafka_sasl_aws_msk_iam_build_request_json(state->hostname.ptr, credential.ptr, amz_date.ptr, signature, state->aws_security_token.ptr);
         rd_rkb_dbg(rktrans->rktrans_rkb, SECURITY,
                            "SASLAWSMSKIAM",
                            "SASL payload calculated as %s",
@@ -528,6 +540,12 @@ static int rd_kafka_sasl_aws_msk_iam_client_new (rd_kafka_transport_t *rktrans,
         state->aws_secret_access_key.size = strlen(conf->sasl.aws_secret_access_key);
         state->aws_region.ptr = conf->sasl.aws_region;
         state->aws_region.size = strlen(conf->sasl.aws_region);
+        
+        if (conf->sasl.aws_security_token != NULL) {
+            state->aws_security_token.ptr = conf->sasl.aws_security_token;
+            state->aws_security_token.size = strlen(conf->sasl.aws_security_token);
+        }
+        
         state->md = EVP_get_digestbyname("SHA256");
         state->state = RD_KAFKA_SASL_AWS_MSK_IAM_SEND_CLIENT_FIRST_MESSAGE;
         
@@ -605,14 +623,17 @@ static int unittest_build_request_json (void) {
         "hostname",
         "AWS_ACCESS_KEY_ID/20100101/us-east-1/kafka-cluster/aws4_request",
         "20100101T000000Z",
-        "d3eeeddfb2c2b76162d583d7499c2364eb9a92b248218e31866659b18997ef44");
+        "d3eeeddfb2c2b76162d583d7499c2364eb9a92b248218e31866659b18997ef44",
+        "security-token");
         
         const char *expected = 
             "{\"version\":\"2020_10_22\",\"host\":\"hostname\","
             "\"user-agent\":\"librdkafka\",\"action\":\"kafka-cluster:Connect\","
             "\"x-amz-algorithm\":\"AWS4-HMAC-SHA256\","
             "\"x-amz-credential\":\"AWS_ACCESS_KEY_ID/20100101/us-east-1/kafka-cluster/aws4_request\","
-            "\"x-amz-date\":\"20100101T000000Z\",\"x-amz-signedheaders\":\"host\","
+            "\"x-amz-date\":\"20100101T000000Z\","
+            "\"x-amz-security-token\":\"security-token\","
+            "\"x-amz-signedheaders\":\"host\","
             "\"x-amz-expires\":\"900\","
             "\"x-amz-signature\":\"d3eeeddfb2c2b76162d583d7499c2364eb9a92b248218e31866659b18997ef44\"}";
         RD_UT_ASSERT(strcmp(expected, sasl_payload) == 0, "expected: %s\nactual: %s", expected, sasl_payload);
@@ -709,6 +730,55 @@ static int unittest_build_canonical_request (void) {
 
 
 /**
+ * @brief Verify that a canonical request can be formed properly.
+ */
+static int unittest_build_canonical_request_with_security_token (void) {       
+        RD_UT_BEGIN();
+        int hostname_str_size = strlen("hostname") + 1;
+        char *hostname_str;
+        
+        hostname_str = rd_malloc(hostname_str_size);
+        rd_snprintf(hostname_str, hostname_str_size, "hostname");
+        
+        rd_chariov_t hostname =
+                { .ptr = hostname_str, .size = strlen(hostname_str) };
+        
+        struct rd_kafka_sasl_aws_msk_iam_state state =
+        {
+            RD_KAFKA_SASL_AWS_MSK_IAM_SEND_CLIENT_FIRST_MESSAGE, "20100101", "000000", hostname
+        };
+        state.aws_access_key_id.ptr = "AWS_ACCESS_KEY_ID";
+        state.aws_access_key_id.size = strlen("AWS_ACCESS_KEY_ID");
+        state.aws_secret_access_key.ptr = "AWS_SECRET_ACCESS_KEY";
+        state.aws_secret_access_key.size = strlen("AWS_SECRET_ACCESS_KEY");
+        state.aws_region.ptr = "us-east-1";
+        state.aws_region.size = strlen("us-east-1");
+        state.aws_security_token.ptr = "security-token";
+        state.aws_security_token.size = strlen("security-token");
+        state.md = EVP_get_digestbyname("SHA256");
+        char *cr = rd_kafka_sasl_aws_msk_iam_build_canonical_request(&state);
+        
+        const char *expected = 
+            "GET\n/\n"
+            "Action=kafka-cluster%3AConnect&"
+            "X-Amz-Algorithm=AWS4-HMAC-SHA256&"
+            "X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20100101%2Fus-east-1%2Fkafka-cluster%2Faws4_request&"
+            "X-Amz-Date=20100101T000000Z&"
+            "X-Amz-Expires=900&"
+            "X-Amz-Security-Token=security-token&"
+            "X-Amz-SignedHeaders=host\n"
+            "host:hostname\n\n"
+            "host\n"
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        RD_UT_ASSERT(strcmp(expected, cr) == 0, "expected: %s\nactual: %s", expected, cr);
+   
+        RD_IF_FREE(cr, rd_free);
+        RD_IF_FREE(hostname.ptr, rd_free);
+        RD_UT_PASS();
+}
+
+
+/**
  * @brief Verify that a uri encoding / escaping works as expected.
  */
 static int unittest_uri_encode (void) {
@@ -738,6 +808,7 @@ int unittest_aws_msk_iam (void) {
 
         fails += unittest_uri_encode();
         fails += unittest_build_canonical_request();
+        fails += unittest_build_canonical_request_with_security_token();
         fails += unittest_calculate_signature();
         fails += unittest_build_request_json();
 
