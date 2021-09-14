@@ -35,44 +35,47 @@ rd_kafka_event_type_t rd_kafka_event_type(const rd_kafka_event_t *rkev) {
 }
 
 const char *rd_kafka_event_name(const rd_kafka_event_t *rkev) {
-        switch (rkev ? rkev->rko_evtype : RD_KAFKA_EVENT_NONE) {
-        case RD_KAFKA_EVENT_NONE:
-                return "(NONE)";
-        case RD_KAFKA_EVENT_DR:
-                return "DeliveryReport";
-        case RD_KAFKA_EVENT_FETCH:
-                return "Fetch";
-        case RD_KAFKA_EVENT_LOG:
-                return "Log";
-        case RD_KAFKA_EVENT_ERROR:
-                return "Error";
-        case RD_KAFKA_EVENT_REBALANCE:
-                return "Rebalance";
-        case RD_KAFKA_EVENT_OFFSET_COMMIT:
-                return "OffsetCommit";
-        case RD_KAFKA_EVENT_STATS:
-                return "Stats";
-        case RD_KAFKA_EVENT_CREATETOPICS_RESULT:
-                return "CreateTopicsResult";
-        case RD_KAFKA_EVENT_DELETETOPICS_RESULT:
-                return "DeleteTopicsResult";
-        case RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT:
-                return "CreatePartitionsResult";
-        case RD_KAFKA_EVENT_ALTERCONFIGS_RESULT:
-                return "AlterConfigsResult";
-        case RD_KAFKA_EVENT_DESCRIBECONFIGS_RESULT:
-                return "DescribeConfigsResult";
-        case RD_KAFKA_EVENT_DELETERECORDS_RESULT:
-                return "DeleteRecordsResult";
-        case RD_KAFKA_EVENT_DELETEGROUPS_RESULT:
-                return "DeleteGroupsResult";
-        case RD_KAFKA_EVENT_DELETECONSUMERGROUPOFFSETS_RESULT:
-                return "DeleteConsumerGroupOffsetsResult";
-        case RD_KAFKA_EVENT_OAUTHBEARER_TOKEN_REFRESH:
-                return "SaslOAuthBearerTokenRefresh";
-        default:
-                return "?unknown?";
-        }
+	switch (rkev ? rkev->rko_evtype : RD_KAFKA_EVENT_NONE)
+	{
+	case RD_KAFKA_EVENT_NONE:
+		return "(NONE)";
+	case RD_KAFKA_EVENT_DR:
+		return "DeliveryReport";
+	case RD_KAFKA_EVENT_FETCH:
+		return "Fetch";
+	case RD_KAFKA_EVENT_LOG:
+		return "Log";
+	case RD_KAFKA_EVENT_ERROR:
+		return "Error";
+	case RD_KAFKA_EVENT_REBALANCE:
+		return "Rebalance";
+	case RD_KAFKA_EVENT_OFFSET_COMMIT:
+		return "OffsetCommit";
+	case RD_KAFKA_EVENT_STATS:
+		return "Stats";
+	case RD_KAFKA_EVENT_CREATETOPICS_RESULT:
+		return "CreateTopicsResult";
+	case RD_KAFKA_EVENT_DELETETOPICS_RESULT:
+		return "DeleteTopicsResult";
+	case RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT:
+		return "CreatePartitionsResult";
+	case RD_KAFKA_EVENT_ALTERCONFIGS_RESULT:
+		return "AlterConfigsResult";
+	case RD_KAFKA_EVENT_DESCRIBECONFIGS_RESULT:
+		return "DescribeConfigsResult";
+	case RD_KAFKA_EVENT_DELETERECORDS_RESULT:
+		return "DeleteRecordsResult";
+	case RD_KAFKA_EVENT_DELETEGROUPS_RESULT:
+		return "DeleteGroupsResult";
+	case RD_KAFKA_EVENT_DELETECONSUMERGROUPOFFSETS_RESULT:
+		return "DeleteConsumerGroupOffsetsResult";
+	case RD_KAFKA_EVENT_OAUTHBEARER_TOKEN_REFRESH:
+		return "SaslOAuthBearerTokenRefresh";
+	case RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH:
+		return "SaslAwsMskIamCredentialRefresh";
+	default:
+		return "?unknown?";
+	}
 }
 
 

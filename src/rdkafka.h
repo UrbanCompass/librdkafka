@@ -2156,6 +2156,7 @@ RD_EXPORT
 void rd_kafka_conf_enable_sasl_queue(rd_kafka_conf_t *conf, int enable);
 
 
+
 /**
  * @brief Set socket callback.
  *
@@ -5078,6 +5079,9 @@ typedef int rd_kafka_event_type_t;
                                               token needs to be                \
                                               refreshed */
 #define RD_KAFKA_EVENT_BACKGROUND 0x200 /**< Enable background thread. */
+#define RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH 0x400 /**< SASL/AWS_MSK_IAM    \
+                                                             credentials need to be  \
+                                                             refreshed */
 
 
 /**

@@ -31,19 +31,20 @@
  * @brief Converts op type to event type.
  * @returns the event type, or 0 if the op cannot be mapped to an event.
  */
-static RD_UNUSED RD_INLINE rd_kafka_event_type_t
-rd_kafka_op2event(rd_kafka_op_type_t optype) {
-        static const rd_kafka_event_type_t map[RD_KAFKA_OP__END] = {
-            [RD_KAFKA_OP_DR]            = RD_KAFKA_EVENT_DR,
-            [RD_KAFKA_OP_FETCH]         = RD_KAFKA_EVENT_FETCH,
-            [RD_KAFKA_OP_ERR]           = RD_KAFKA_EVENT_ERROR,
-            [RD_KAFKA_OP_CONSUMER_ERR]  = RD_KAFKA_EVENT_ERROR,
-            [RD_KAFKA_OP_REBALANCE]     = RD_KAFKA_EVENT_REBALANCE,
-            [RD_KAFKA_OP_OFFSET_COMMIT] = RD_KAFKA_EVENT_OFFSET_COMMIT,
-            [RD_KAFKA_OP_LOG]           = RD_KAFKA_EVENT_LOG,
-            [RD_KAFKA_OP_STATS]         = RD_KAFKA_EVENT_STATS,
-            [RD_KAFKA_OP_OAUTHBEARER_REFRESH] =
-                RD_KAFKA_EVENT_OAUTHBEARER_TOKEN_REFRESH};
+static RD_UNUSED RD_INLINE
+rd_kafka_event_type_t rd_kafka_op2event(rd_kafka_op_type_t optype) {
+	static const rd_kafka_event_type_t map[RD_KAFKA_OP__END] = {
+		[RD_KAFKA_OP_DR] = RD_KAFKA_EVENT_DR,
+		[RD_KAFKA_OP_FETCH] = RD_KAFKA_EVENT_FETCH,
+		[RD_KAFKA_OP_ERR] = RD_KAFKA_EVENT_ERROR,
+		[RD_KAFKA_OP_CONSUMER_ERR] = RD_KAFKA_EVENT_ERROR,
+		[RD_KAFKA_OP_REBALANCE] = RD_KAFKA_EVENT_REBALANCE,
+		[RD_KAFKA_OP_OFFSET_COMMIT] = RD_KAFKA_EVENT_OFFSET_COMMIT,
+                [RD_KAFKA_OP_LOG] = RD_KAFKA_EVENT_LOG,
+		[RD_KAFKA_OP_STATS] = RD_KAFKA_EVENT_STATS,
+                [RD_KAFKA_OP_OAUTHBEARER_REFRESH] = RD_KAFKA_EVENT_OAUTHBEARER_TOKEN_REFRESH,
+                [RD_KAFKA_OP_AWS_MSK_IAM_REFRESH] = RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH
+	};
 
         return map[(int)optype & ~RD_KAFKA_OP_FLAGMASK];
 }
@@ -103,7 +104,8 @@ static RD_UNUSED RD_INLINE int rd_kafka_event_setup(rd_kafka_t *rk,
         case RD_KAFKA_EVENT_DELETEGROUPS_RESULT:
         case RD_KAFKA_EVENT_DELETECONSUMERGROUPOFFSETS_RESULT:
         case RD_KAFKA_EVENT_OAUTHBEARER_TOKEN_REFRESH:
-                return 1;
+        case RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH:
+		return 1;
 
         default:
                 return 0;
