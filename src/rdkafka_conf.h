@@ -157,7 +157,7 @@ typedef enum {
 
 /* Increase in steps of 64 as needed.
  * This must be larger than sizeof(rd_kafka_[topic_]conf_t) */
-#define RD_KAFKA_CONF_PROPS_IDX_MAX (64*36)
+#define RD_KAFKA_CONF_PROPS_IDX_MAX (64*37)
 
 /**
  * @struct rd_kafka_anyconf_t
