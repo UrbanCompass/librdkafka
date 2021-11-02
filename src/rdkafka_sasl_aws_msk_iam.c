@@ -371,7 +371,7 @@ rd_kafka_aws_msk_iam_credential_refresh0 (
         }
 
         rd_kafka_dbg(rk, SECURITY, "SASLAWSMSKIAM", "New AWS credentials retrieved from STS");
-
+  
         RD_IF_FREE(handle_aws_access_key_id, rd_free);
         RD_IF_FREE(handle_aws_secret_access_key, rd_free);
         RD_IF_FREE(handle_aws_region, rd_free);
