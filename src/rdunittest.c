@@ -430,6 +430,8 @@ extern int unittest_http(void);
 extern int unittest_aws_msk_iam (void);
 extern int unittest_aws (void);
 #endif
+extern int unittest_assignors (void);
+extern int unittest_map (void);
 
 int rd_unittest(void) {
         int fails = 0;
@@ -471,7 +473,10 @@ int rd_unittest(void) {
                 { "sasl_aws_msk_iam", unittest_aws_msk_iam },
                 { "aws", unittest_aws },
 #endif
-                
+#if WITH_SASL_AWS_MSK_IAM
+                { "sasl_aws_msk_iam", unittest_aws_msk_iam },
+                { "aws", unittest_aws },
+#endif
                 { "stringbuilder",  unittest_stringbuilder },
                 { NULL }
         };

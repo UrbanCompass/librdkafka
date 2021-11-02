@@ -200,6 +200,70 @@ int main(int argc, char **argv) {
             }
         }
 
+        if (rd_kafka_conf_set(conf, "debug", "broker,security",
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+        }
+        
+        if (argc >= 6) {
+            if (rd_kafka_conf_set(conf, "security.protocol", "SASL_SSL",
+                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                fprintf(stderr, "%s\n", errstr);
+                return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "sasl.mechanisms", "AWS_MSK_IAM",
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "sasl.aws.access.key.id", aws_access_key_id,
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "sasl.aws.secret.access.key", aws_secret_access_key,
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "sasl.aws.region", aws_region,
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+        }
+
+        if (argc == 9) {
+            if (rd_kafka_conf_set(conf, "sasl.aws.security.token", aws_security_token,
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "sasl.aws.role.arn", role_arn,
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "sasl.aws.role.session.name", role_session_name,
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+
+            if (rd_kafka_conf_set(conf, "enable.sasl.aws.use.sts", "1",
+                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
+                    fprintf(stderr, "%s\n", errstr);
+                    return 1;
+            }
+        }
+
         /* Set the delivery report callback.
          * This callback will be called once per message to inform
          * the application if delivery succeeded or failed.

@@ -2247,6 +2247,10 @@ rd_kafka_t *rd_kafka_new(rd_kafka_type_t type,
         rk->rk_conf.enabled_events |=
                 RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH;
 #endif
+#if WITH_SASL_AWS_MSK_IAM
+        rk->rk_conf.enabled_events |=
+                RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH;
+#endif
 
         rk->rk_controllerid = -1;
 
