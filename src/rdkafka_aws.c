@@ -76,7 +76,7 @@ static size_t rd_kafka_aws_curl_write_callback(char *ptr, size_t size, size_t nm
     size_t realsize = size * nmemb; 
     curl_in_mem_buf *req = (curl_in_mem_buf *) userdata;
 
-    printf("receive chunk of %zu bytes\n", realsize);
+    printf("received chunk of %zu bytes\n", realsize);
 
     while (req->buflen < req->len + realsize + 1)
     {
@@ -551,11 +551,13 @@ int rd_kafka_aws_send_request (rd_kafka_aws_credential_t *credential,
                                 credential->aws_access_key_id = rd_strdup((const char *)content);
                                 xmlFree(content);
                         }
+
                         if (!xmlStrcmp(cur->name, (const xmlChar *)"SecretAccessKey")) {
                                 xmlChar *content = xmlNodeListGetString(document, cur->children, 1);
                                 credential->aws_secret_access_key = rd_strdup((const char *)content);
                                 xmlFree(content);
                         }
+
                         if (!xmlStrcmp(cur->name, (const xmlChar *)"SessionToken")) {
                                 xmlChar *content = xmlNodeListGetString(document, cur->children, 1);
                                 credential->aws_security_token = rd_strdup((const char *)content);
@@ -577,6 +579,7 @@ int rd_kafka_aws_send_request (rd_kafka_aws_credential_t *credential,
                 RD_IF_FREE(curl_amz_security_token_header, rd_free);
         }
         curl_easy_cleanup(curl);
+
         return 1;
 }
 

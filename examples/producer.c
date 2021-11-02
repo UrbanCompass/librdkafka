@@ -47,7 +47,7 @@ static volatile sig_atomic_t run = 1;
 /**
  * @brief Signal termination of program
  */
-static void stop(int sig) {
+static void stop (int sig) {
         run = 0;
         fclose(stdin); /* abort fgets() */
 }
@@ -64,15 +64,15 @@ static void stop(int sig) {
  * The callback is triggered from rd_kafka_poll() and executes on
  * the application's thread.
  */
-static void
-dr_msg_cb(rd_kafka_t *rk, const rd_kafka_message_t *rkmessage, void *opaque) {
+static void dr_msg_cb (rd_kafka_t *rk,
+                       const rd_kafka_message_t *rkmessage, void *opaque) {
         if (rkmessage->err)
                 fprintf(stderr, "%% Message delivery failed: %s\n",
                         rd_kafka_err2str(rkmessage->err));
         else
                 fprintf(stderr,
                         "%% Message delivered (%zd bytes, "
-                        "partition %" PRId32 ")\n",
+                        "partition %"PRId32")\n",
                         rkmessage->len, rkmessage->partition);
 
         /* The rkmessage is destroyed automatically by librdkafka */
@@ -80,7 +80,7 @@ dr_msg_cb(rd_kafka_t *rk, const rd_kafka_message_t *rkmessage, void *opaque) {
 
 
 
-int main(int argc, char **argv) {
+int main (int argc, char **argv) {
         rd_kafka_t *rk;                         /* Producer instance handle */
         rd_kafka_conf_t *conf;                  /* Temporary configuration object */
         char errstr[512];                       /* librdkafka API error reporting buffer */
@@ -130,74 +130,10 @@ int main(int argc, char **argv) {
          * host or host:port (default port 9092).
          * librdkafka will use the bootstrap brokers to acquire the full
          * set of brokers from the cluster. */
-        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers, errstr,
-                              sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                fprintf(stderr, "%s\n", errstr);
-                return 1;
-        }
-
-        if (rd_kafka_conf_set(conf, "debug", "broker,security",
+        if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers,
                               errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
                 fprintf(stderr, "%s\n", errstr);
                 return 1;
-        }
-        
-        if (argc >= 6) {
-            if (rd_kafka_conf_set(conf, "security.protocol", "SASL_SSL",
-                              errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                fprintf(stderr, "%s\n", errstr);
-                return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "sasl.mechanisms", "AWS_MSK_IAM",
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "sasl.aws.access.key.id", aws_access_key_id,
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "sasl.aws.secret.access.key", aws_secret_access_key,
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "sasl.aws.region", aws_region,
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-        }
-
-        if (argc == 9) {
-            if (rd_kafka_conf_set(conf, "sasl.aws.security.token", aws_security_token,
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "sasl.aws.role.arn", role_arn,
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "sasl.aws.role.session.name", role_session_name,
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
-
-            if (rd_kafka_conf_set(conf, "enable.sasl.aws.use.sts", "1",
-                                  errstr, sizeof(errstr)) != RD_KAFKA_CONF_OK) {
-                    fprintf(stderr, "%s\n", errstr);
-                    return 1;
-            }
         }
 
         if (rd_kafka_conf_set(conf, "debug", "broker,security",
@@ -281,8 +217,8 @@ int main(int argc, char **argv) {
          */
         rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
         if (!rk) {
-                fprintf(stderr, "%% Failed to create new producer: %s\n",
-                        errstr);
+                fprintf(stderr,
+                        "%% Failed to create new producer: %s\n", errstr);
                 return 1;
         }
 
@@ -298,12 +234,12 @@ int main(int argc, char **argv) {
                 size_t len = strlen(buf);
                 rd_kafka_resp_err_t err;
 
-                if (buf[len - 1] == '\n') /* Remove newline */
+                if (buf[len-1] == '\n') /* Remove newline */
                         buf[--len] = '\0';
 
                 if (len == 0) {
                         /* Empty line: only serve delivery reports */
-                        rd_kafka_poll(rk, 0 /*non-blocking */);
+                        rd_kafka_poll(rk, 0/*non-blocking */);
                         continue;
                 }
 
@@ -319,28 +255,28 @@ int main(int argc, char **argv) {
                  */
         retry:
                 err = rd_kafka_producev(
-                    /* Producer handle */
-                    rk,
-                    /* Topic name */
-                    RD_KAFKA_V_TOPIC(topic),
-                    /* Make a copy of the payload. */
-                    RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY),
-                    /* Message value and length */
-                    RD_KAFKA_V_VALUE(buf, len),
-                    /* Per-Message opaque, provided in
-                     * delivery report callback as
-                     * msg_opaque. */
-                    RD_KAFKA_V_OPAQUE(NULL),
-                    /* End sentinel */
-                    RD_KAFKA_V_END);
+                        /* Producer handle */
+                        rk,
+                        /* Topic name */
+                        RD_KAFKA_V_TOPIC(topic),
+                        /* Make a copy of the payload. */
+                        RD_KAFKA_V_MSGFLAGS(RD_KAFKA_MSG_F_COPY),
+                        /* Message value and length */
+                        RD_KAFKA_V_VALUE(buf, len),
+                        /* Per-Message opaque, provided in
+                         * delivery report callback as
+                         * msg_opaque. */
+                        RD_KAFKA_V_OPAQUE(NULL),
+                        /* End sentinel */
+                        RD_KAFKA_V_END);
 
                 if (err) {
                         /*
                          * Failed to *enqueue* message for producing.
                          */
                         fprintf(stderr,
-                                "%% Failed to produce to topic %s: %s\n", topic,
-                                rd_kafka_err2str(err));
+                                "%% Failed to produce to topic %s: %s\n",
+                                topic, rd_kafka_err2str(err));
 
                         if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
                                 /* If the internal queue is full, wait for
@@ -353,13 +289,11 @@ int main(int argc, char **argv) {
                                  * The internal queue is limited by the
                                  * configuration property
                                  * queue.buffering.max.messages */
-                                rd_kafka_poll(rk,
-                                              1000 /*block for max 1000ms*/);
+                                rd_kafka_poll(rk, 1000/*block for max 1000ms*/);
                                 goto retry;
                         }
                 } else {
-                        fprintf(stderr,
-                                "%% Enqueued message (%zd bytes) "
+                        fprintf(stderr, "%% Enqueued message (%zd bytes) "
                                 "for topic %s\n",
                                 len, topic);
                 }
@@ -376,7 +310,7 @@ int main(int argc, char **argv) {
                  * to make sure previously produced messages have their
                  * delivery report callback served (and any other callbacks
                  * you register). */
-                rd_kafka_poll(rk, 0 /*non-blocking*/);
+                rd_kafka_poll(rk, 0/*non-blocking*/);
         }
 
 
@@ -384,7 +318,7 @@ int main(int argc, char **argv) {
          * rd_kafka_flush() is an abstraction over rd_kafka_poll() which
          * waits for all messages to be delivered. */
         fprintf(stderr, "%% Flushing final messages..\n");
-        rd_kafka_flush(rk, 10 * 1000 /* wait for max 10 seconds */);
+        rd_kafka_flush(rk, 10*1000 /* wait for max 10 seconds */);
 
         /* If the output queue is still not empty there is an issue
          * with producing messages to the clusters. */

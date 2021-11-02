@@ -45,9 +45,8 @@
  * @returns the number of bytes written to \p dst, or 0 if not enough space.
  */
 
-static RD_INLINE RD_UNUSED size_t rd_uvarint_enc_u64(char *dst,
-                                                     size_t dstsize,
-                                                     uint64_t num) {
+static RD_INLINE RD_UNUSED
+size_t rd_uvarint_enc_u64 (char *dst, size_t dstsize, uint64_t num) {
         size_t of = 0;
 
         do {
@@ -65,16 +64,14 @@ static RD_INLINE RD_UNUSED size_t rd_uvarint_enc_u64(char *dst,
  * @brief encodes a signed integer using zig-zag encoding.
  * @sa rd_uvarint_enc_u64
  */
-static RD_INLINE RD_UNUSED size_t rd_uvarint_enc_i64(char *dst,
-                                                     size_t dstsize,
-                                                     int64_t num) {
+static RD_INLINE RD_UNUSED
+size_t rd_uvarint_enc_i64 (char *dst, size_t dstsize, int64_t num) {
         return rd_uvarint_enc_u64(dst, dstsize, (num << 1) ^ (num >> 63));
 }
 
 
-static RD_INLINE RD_UNUSED size_t rd_uvarint_enc_i32(char *dst,
-                                                     size_t dstsize,
-                                                     int32_t num) {
+static RD_INLINE RD_UNUSED
+size_t rd_uvarint_enc_i32 (char *dst, size_t dstsize, int32_t num) {
         return rd_uvarint_enc_i64(dst, dstsize, num);
 }
 
@@ -99,7 +96,7 @@ static RD_INLINE RD_UNUSED size_t rd_uvarint_enc_i32(char *dst,
  * @returns 1 if varint decoding failed, else 0.
  * @warning \p DEC_RETVAL will be evaluated twice.
  */
-#define RD_UVARINT_DEC_FAILED(DEC_RETVAL)                                      \
+#define RD_UVARINT_DEC_FAILED(DEC_RETVAL) \
         (RD_UVARINT_UNDERFLOW(DEC_RETVAL) || RD_UVARINT_OVERFLOW(DEC_RETVAL))
 
 
@@ -114,12 +111,11 @@ static RD_INLINE RD_UNUSED size_t rd_uvarint_enc_i32(char *dst,
  *
  * @returns the number of bytes read from \p src.
  */
-static RD_INLINE RD_UNUSED size_t rd_uvarint_dec(const char *src,
-                                                 size_t srcsize,
-                                                 uint64_t *nump) {
-        size_t of    = 0;
+static RD_INLINE RD_UNUSED
+size_t rd_uvarint_dec (const char *src, size_t srcsize, uint64_t *nump) {
+        size_t of = 0;
         uint64_t num = 0;
-        int shift    = 0;
+        int shift = 0;
 
         do {
                 if (unlikely(srcsize-- == 0))
@@ -132,9 +128,8 @@ static RD_INLINE RD_UNUSED size_t rd_uvarint_dec(const char *src,
         return of;
 }
 
-static RD_INLINE RD_UNUSED size_t rd_varint_dec_i64(const char *src,
-                                                    size_t srcsize,
-                                                    int64_t *nump) {
+static RD_INLINE RD_UNUSED
+size_t rd_varint_dec_i64 (const char *src, size_t srcsize, int64_t *nump) {
         uint64_t n;
         size_t r;
 
@@ -149,7 +144,8 @@ static RD_INLINE RD_UNUSED size_t rd_varint_dec_i64(const char *src,
 /**
  * @returns the maximum encoded size for a type
  */
-#define RD_UVARINT_ENC_SIZEOF(TYPE) (sizeof(TYPE) + 1 + (sizeof(TYPE) / 7))
+#define RD_UVARINT_ENC_SIZEOF(TYPE) \
+        (sizeof(TYPE) + 1 + (sizeof(TYPE)/7))
 
 /**
  * @returns the encoding size of the value 0
@@ -157,7 +153,7 @@ static RD_INLINE RD_UNUSED size_t rd_varint_dec_i64(const char *src,
 #define RD_UVARINT_ENC_SIZE_0() ((size_t)1)
 
 
-int unittest_rdvarint(void);
+int unittest_rdvarint (void);
 
 /**@}*/
 

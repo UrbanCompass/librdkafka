@@ -35,7 +35,8 @@
  */
 
 
-static void do_test_idle_producer() {
+static void do_test_idle_producer () {
+
   RdKafka::Conf *conf;
   Test::conf_init(&conf, NULL, 0);
 
@@ -53,8 +54,8 @@ static void do_test_idle_producer() {
 
 
 extern "C" {
-int main_8000_idle(int argc, char **argv) {
-  do_test_idle_producer();
-  return 0;
-}
+  int main_8000_idle (int argc, char **argv) {
+    do_test_idle_producer();
+    return 0;
+  }
 }
