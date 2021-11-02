@@ -5083,9 +5083,6 @@ typedef int rd_kafka_event_type_t;
 #define RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH 0x400 /**< SASL/AWS_MSK_IAM    \
                                                              credentials need to be  \
                                                              refreshed */
-#define RD_KAFKA_EVENT_AWS_MSK_IAM_CREDENTIAL_REFRESH 0x200 /**< SASL/AWS_MSK_IAM
-                                                             credentials need to be
-                                                             refreshed */
 
 
 /**

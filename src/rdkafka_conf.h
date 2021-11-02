@@ -297,19 +297,6 @@ struct rd_kafka_conf_s {
                 int   duration_sec;  /* needed for STS AssumeRole, defaults to 900 if not set */
                 /* SASL/AWS_MSK_IAM credential refresh event callback */
 #endif
-#if WITH_SASL_AWS_MSK_IAM
-                /* AWS credentials for SASL auth
-                 * (standard toolchain not available in librdkafka) */
-                char *aws_access_key_id;
-                char *aws_secret_access_key;
-                char *aws_region;
-                int   enable_use_sts;
-                char *aws_security_token;  /* needed for STS AssumeRole */
-                char *role_arn;  /* needed for STS AssumeRole */
-                char *role_session_name;  /* needed for STS AssumeRole */
-                int   duration_sec;  /* needed for STS AssumeRole, defaults to 900 if not set */
-                /* SASL/AWS_MSK_IAM credential refresh event callback */
-#endif
                 char *oauthbearer_config;
                 int enable_oauthbearer_unsecure_jwt;
                 int enable_callback_queue;
