@@ -48,6 +48,9 @@
 
 #include "rdsysqueue.h"
 #include "rdkafka_sasl_oauthbearer.h"
+#if WITH_CURL
+#include "rdkafka_sasl_oauthbearer_oidc.h"
+#endif
 #include "rdkafka_msgset.h"
 #include "rdkafka_txnmgr.h"
 #if WITH_SASL_AWS_MSK_IAM
@@ -425,6 +428,7 @@ extern int unittest_assignors(void);
 extern int unittest_map(void);
 #if WITH_CURL
 extern int unittest_http(void);
+extern int unittest_sasl_oauthbearer_oidc(void);
 #endif
 #if WITH_SASL_AWS_MSK_IAM
 extern int unittest_aws_msk_iam (void);
@@ -466,6 +470,7 @@ int rd_unittest(void) {
                 {"assignors", unittest_assignors},
 #if WITH_CURL
                 {"http", unittest_http},
+                {"sasl_oauthbearer_oidc", unittest_sasl_oauthbearer_oidc},
 #endif
 #if WITH_SASL_AWS_MSK_IAM
                 { "sasl_aws_msk_iam", unittest_aws_msk_iam },
