@@ -1639,14 +1639,15 @@ restart:
 
 /**
  * @returns rd_true if property has been set/modified, else rd_false.
- *          If \p name is unknown 0 is returned.
+ *
+ * @warning Asserts if the property does not exist.
  */
 rd_bool_t rd_kafka_conf_is_modified(const rd_kafka_conf_t *conf,
                                     const char *name) {
         const struct rd_kafka_property *prop;
 
         if (!(prop = rd_kafka_conf_prop_find(_RK_GLOBAL, name)))
-                return rd_false;
+                RD_BUG("Configuration property \"%s\" does not exist", name);
 
         return rd_kafka_anyconf_is_modified(conf, prop);
 }
@@ -1654,7 +1655,8 @@ rd_bool_t rd_kafka_conf_is_modified(const rd_kafka_conf_t *conf,
 
 /**
  * @returns true if property has been set/modified, else 0.
- *          If \p name is unknown 0 is returned.
+ *
+ * @warning Asserts if the property does not exist.
  */
 static rd_bool_t
 rd_kafka_topic_conf_is_modified(const rd_kafka_topic_conf_t *conf,
@@ -1662,7 +1664,8 @@ rd_kafka_topic_conf_is_modified(const rd_kafka_topic_conf_t *conf,
         const struct rd_kafka_property *prop;
 
         if (!(prop = rd_kafka_conf_prop_find(_RK_TOPIC, name)))
-                return 0;
+                RD_BUG("Topic configuration property \"%s\" does not exist",
+                       name);
 
         return rd_kafka_anyconf_is_modified(conf, prop);
 }
@@ -3910,8 +3913,8 @@ const char *rd_kafka_conf_finalize(rd_kafka_type_t cltype,
                         if (tconf->message_timeout_ms != 0 &&
                             (double)tconf->message_timeout_ms <=
                                 conf->buffering_max_ms_dbl) {
-                                if (rd_kafka_topic_conf_is_modified(
-                                        tconf, "linger.ms"))
+                                if (rd_kafka_conf_is_modified(conf,
+                                                              "linger.ms"))
                                         return "`message.timeout.ms` must be "
                                                "greater than `linger.ms`";
                                 else /* Auto adjust linger.ms to be lower
@@ -3988,7 +3991,7 @@ const char *rd_kafka_topic_conf_finalize(rd_kafka_type_t cltype,
 
         if (tconf->message_timeout_ms != 0 &&
             (double)tconf->message_timeout_ms <= conf->buffering_max_ms_dbl &&
-            rd_kafka_topic_conf_is_modified(tconf, "linger.ms"))
+            rd_kafka_conf_is_modified(conf, "linger.ms"))
                 return "`message.timeout.ms` must be greater than `linger.ms`";
 
         return NULL;
