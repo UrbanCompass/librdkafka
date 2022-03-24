@@ -2433,13 +2433,12 @@ rd_kafka_t *rd_kafka_new(rd_kafka_type_t type,
                         goto fail;
         }
 
-        mtx_lock(&rk->rk_init_lock);
-
         /* Lock handle here to synchronise state, i.e., hold off
          * the thread until we've finalized the handle. */
         rd_kafka_wrlock(rk);
 
         /* Create handler thread */
+        mtx_lock(&rk->rk_init_lock);
         rk->rk_init_wait_cnt++;
         if ((thrd_create(&rk->rk_thread, rd_kafka_thread_main, rk)) !=
             thrd_success) {
@@ -2450,8 +2449,8 @@ rd_kafka_t *rd_kafka_new(rd_kafka_type_t type,
                         rd_snprintf(errstr, errstr_size,
                                     "Failed to create thread: %s (%i)",
                                     rd_strerror(errno), errno);
-                rd_kafka_wrunlock(rk);
                 mtx_unlock(&rk->rk_init_lock);
+                rd_kafka_wrunlock(rk);
 #ifndef _WIN32
                 /* Restore sigmask of caller */
                 pthread_sigmask(SIG_SETMASK, &oldset, NULL);
@@ -2459,8 +2458,8 @@ rd_kafka_t *rd_kafka_new(rd_kafka_type_t type,
                 goto fail;
         }
 
-        rd_kafka_wrunlock(rk);
         mtx_unlock(&rk->rk_init_lock);
+        rd_kafka_wrunlock(rk);
 
         /*
          * @warning `goto fail` is prohibited past this point
