@@ -54,13 +54,10 @@
 #include "rdkafka_interceptor.h"
 #include "rdkafka_idempotence.h"
 #include "rdkafka_sasl_oauthbearer.h"
-<<<<<<< HEAD
 #include "rdkafka_sasl_aws_msk_iam.h"
-=======
 #if WITH_CURL
 #include "rdkafka_sasl_oauthbearer_oidc.h"
 #endif
->>>>>>> a82595be (Retrieve jwt token from token provider (@jliunyu, #3560))
 #if WITH_SSL
 #include "rdkafka_ssl.h"
 #endif
