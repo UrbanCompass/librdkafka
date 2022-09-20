@@ -170,13 +170,17 @@ struct rd_kafka_property {
 
 #if WITH_CURL
 #define _UNSUPPORTED_HTTP .unsupported = NULL
-#define _UNSUPPORTED_OIDC .unsupported = NULL
 #else
 #define _UNSUPPORTED_HTTP .unsupported = "libcurl not available at build time"
+#endif
+
+#if WITH_OAUTHBEARER_OIDC
+#define _UNSUPPORTED_OIDC .unsupported = NULL
+#else
 #define _UNSUPPORTED_OIDC                                                      \
         .unsupported =                                                         \
-            "OAuth/OIDC depends on libcurl which was not available "           \
-            "at build time"
+            "OAuth/OIDC depends on libcurl and OpenSSL which were not "        \
+            "available at build time"
 #endif
 
 #ifdef _WIN32
@@ -546,6 +550,13 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
              {AF_INET, "v4"},
              {AF_INET6, "v6"},
          }},
+    {_RK_GLOBAL | _RK_MED, "socket.connection.setup.timeout.ms", _RK_C_INT,
+     _RK(socket_connection_setup_timeout_ms),
+     "Maximum time allowed for broker connection setup "
+     "(TCP connection setup as well SSL and SASL handshake). "
+     "If the connection to the broker is not fully functional after this "
+     "the connection will be closed and retried.",
+     1000, INT_MAX, 30 * 1000 /* 30s */},
     {_RK_GLOBAL | _RK_MED, "connections.max.idle.ms", _RK_C_INT,
      _RK(connections_max_idle_ms),
      "Close broker connections after the specified time of "
@@ -623,7 +634,7 @@ static const struct rd_kafka_property rd_kafka_properties[] = {
     {_RK_GLOBAL, "log.connection.close", _RK_C_BOOL, _RK(log_connection_close),
      "Log broker disconnects. "
      "It might be useful to turn this off when interacting with "
-     "0.9 brokers with an aggressive `connection.max.idle.ms` value.",
+     "0.9 brokers with an aggressive `connections.max.idle.ms` value.",
      0, 1, 1},
     {_RK_GLOBAL, "background_event_cb", _RK_C_PTR, _RK(background_event_cb),
      "Background queue event callback "
@@ -2893,7 +2904,7 @@ static size_t rd_kafka_conf_flags2str(char *dest,
 
         /* Phase 1: scan for set flags, accumulate needed size.
          * Phase 2: write to dest */
-        for (j = 0; prop->s2i[j].str; j++) {
+        for (j = 0; j < (int)RD_ARRAYSIZE(prop->s2i) && prop->s2i[j].str; j++) {
                 if (prop->type == _RK_C_S2F && ival != -1 &&
                     (ival & prop->s2i[j].val) != prop->s2i[j].val)
                         continue;

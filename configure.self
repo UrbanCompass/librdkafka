@@ -146,6 +146,11 @@ void foo (void) {
         # SASL OAUTHBEARER's default unsecured JWS implementation
         # requires base64 encoding from OpenSSL
         mkl_allvar_set WITH_SASL_OAUTHBEARER WITH_SASL_OAUTHBEARER y
+		
+		if [[ $WITH_CURL == y ]]; then
+            mkl_allvar_set WITH_OAUTHBEARER_OIDC WITH_OAUTHBEARER_OIDC y
+        fi
+
         # SASL AWS MSK IAM requires base64 encoding from OpenSSL
         if mkl_lib_check "curl" "" disable CC "-lcurl" \
                             "#include <curl/curl.h>"; then

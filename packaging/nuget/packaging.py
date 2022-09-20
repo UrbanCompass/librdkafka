@@ -41,7 +41,8 @@ magic_patterns = {
     ('win', 'x86', '.lib'): re.compile('current ar archive'),
     ('linux', 'x64', '.so'): re.compile('ELF 64.* x86-64'),
     ('linux', 'arm64', '.so'): re.compile('ELF 64.* ARM aarch64'),
-    ('osx', 'x64', '.dylib'): re.compile('Mach-O 64.* x86_64')}
+    ('osx', 'x64', '.dylib'): re.compile('Mach-O 64.* x86_64'),
+    ('osx', 'arm64', '.dylib'): re.compile('Mach-O 64.*arm64')}
 
 magic = magic.Magic()
 
@@ -360,7 +361,7 @@ class NugetPackage (Package):
                                               a.info.get('arch'),
                                               a.info.get('bldtype'))
             if 'toolset' not in a.info:
-                a.info['toolset'] = 'v140'
+                a.info['toolset'] = 'v142'
 
         mappings = [
             [{'arch': 'x64',
@@ -403,11 +404,16 @@ class NugetPackage (Package):
              './share/doc/librdkafka/LICENSES.txt',
              'LICENSES.txt'],
 
-            # Travis OSX build
+            # Travis OSX x64 build
             [{'arch': 'x64', 'plat': 'osx',
               'fname_glob': 'librdkafka-clang.tar.gz'},
              './lib/librdkafka.dylib',
              'runtimes/osx-x64/native/librdkafka.dylib'],
+            # Travis OSX arm64 build
+            [{'arch': 'arm64', 'plat': 'osx',
+              'fname_glob': 'librdkafka-gcc.tar.gz'},
+             './lib/librdkafka.1.dylib',
+             'runtimes/osx-arm64/native/librdkafka.dylib'],
             # Travis Manylinux build
             [{'arch': 'x64',
               'plat': 'linux',
@@ -448,42 +454,47 @@ class NugetPackage (Package):
             [{'arch': 'x64',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/x64/Release/librdkafka.dll',
+             'build/native/bin/v142/x64/Release/librdkafka.dll',
              'runtimes/win-x64/native/librdkafka.dll'],
             [{'arch': 'x64',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/x64/Release/librdkafkacpp.dll',
+             'build/native/bin/v142/x64/Release/librdkafkacpp.dll',
              'runtimes/win-x64/native/librdkafkacpp.dll'],
             [{'arch': 'x64',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/x64/Release/libcrypto-1_1-x64.dll',
+             'build/native/bin/v142/x64/Release/libcrypto-1_1-x64.dll',
              'runtimes/win-x64/native/libcrypto-1_1-x64.dll'],
             [{'arch': 'x64',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/x64/Release/libssl-1_1-x64.dll',
+             'build/native/bin/v142/x64/Release/libssl-1_1-x64.dll',
              'runtimes/win-x64/native/libssl-1_1-x64.dll'],
             [{'arch': 'x64',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/x64/Release/zlib1.dll',
+             'build/native/bin/v142/x64/Release/zlib1.dll',
              'runtimes/win-x64/native/zlib1.dll'],
             [{'arch': 'x64',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/x64/Release/zstd.dll',
+             'build/native/bin/v142/x64/Release/zstd.dll',
              'runtimes/win-x64/native/zstd.dll'],
+            [{'arch': 'x64',
+              'plat': 'win',
+              'fname_glob': 'librdkafka.redist*'},
+             'build/native/bin/v142/x64/Release/libcurl.dll',
+             'runtimes/win-x64/native/libcurl.dll'],
             # matches librdkafka.{VER}.nupkg
             [{'arch': 'x64', 'plat': 'win', 'fname_glob': 'librdkafka*.nupkg',
               'fname_excludes': ['redist', 'symbols']},
-             'build/native/lib/v140/x64/Release/librdkafka.lib',
-             'build/native/lib/win/x64/win-x64-Release/v140/librdkafka.lib'],
+             'build/native/lib/v142/x64/Release/librdkafka.lib',
+             'build/native/lib/win/x64/win-x64-Release/v142/librdkafka.lib'],
             [{'arch': 'x64', 'plat': 'win', 'fname_glob': 'librdkafka*.nupkg',
               'fname_excludes': ['redist', 'symbols']},
-             'build/native/lib/v140/x64/Release/librdkafkacpp.lib',
-             'build/native/lib/win/x64/win-x64-Release/v140/librdkafkacpp.lib'],  # noqa: E501
+             'build/native/lib/v142/x64/Release/librdkafkacpp.lib',
+             'build/native/lib/win/x64/win-x64-Release/v142/librdkafkacpp.lib'],  # noqa: E501
 
             [{'arch': 'x86', 'plat': 'win', 'fname_glob': 'msvcr140.zip'},
                 'vcruntime140.dll',
@@ -494,44 +505,49 @@ class NugetPackage (Package):
             [{'arch': 'x86',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/Win32/Release/librdkafka.dll',
+             'build/native/bin/v142/Win32/Release/librdkafka.dll',
              'runtimes/win-x86/native/librdkafka.dll'],
             [{'arch': 'x86',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/Win32/Release/librdkafkacpp.dll',
+             'build/native/bin/v142/Win32/Release/librdkafkacpp.dll',
              'runtimes/win-x86/native/librdkafkacpp.dll'],
             [{'arch': 'x86',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/Win32/Release/libcrypto-1_1.dll',
+             'build/native/bin/v142/Win32/Release/libcrypto-1_1.dll',
              'runtimes/win-x86/native/libcrypto-1_1.dll'],
             [{'arch': 'x86',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/Win32/Release/libssl-1_1.dll',
+             'build/native/bin/v142/Win32/Release/libssl-1_1.dll',
              'runtimes/win-x86/native/libssl-1_1.dll'],
 
             [{'arch': 'x86',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/Win32/Release/zlib1.dll',
+             'build/native/bin/v142/Win32/Release/zlib1.dll',
              'runtimes/win-x86/native/zlib1.dll'],
             [{'arch': 'x86',
               'plat': 'win',
               'fname_glob': 'librdkafka.redist*'},
-             'build/native/bin/v140/Win32/Release/zstd.dll',
+             'build/native/bin/v142/Win32/Release/zstd.dll',
              'runtimes/win-x86/native/zstd.dll'],
+            [{'arch': 'x86',
+              'plat': 'win',
+              'fname_glob': 'librdkafka.redist*'},
+             'build/native/bin/v142/Win32/Release/libcurl.dll',
+             'runtimes/win-x86/native/libcurl.dll'],
 
             # matches librdkafka.{VER}.nupkg
             [{'arch': 'x86', 'plat': 'win', 'fname_glob': 'librdkafka*.nupkg',
               'fname_excludes': ['redist', 'symbols']},
-             'build/native/lib/v140/Win32/Release/librdkafka.lib',
-             'build/native/lib/win/x86/win-x86-Release/v140/librdkafka.lib'],
+             'build/native/lib/v142/Win32/Release/librdkafka.lib',
+             'build/native/lib/win/x86/win-x86-Release/v142/librdkafka.lib'],
             [{'arch': 'x86', 'plat': 'win', 'fname_glob': 'librdkafka*.nupkg',
               'fname_excludes': ['redist', 'symbols']},
-             'build/native/lib/v140/Win32/Release/librdkafkacpp.lib',
-             'build/native/lib/win/x86/win-x86-Release/v140/librdkafkacpp.lib']
+             'build/native/lib/v142/Win32/Release/librdkafkacpp.lib',
+             'build/native/lib/win/x86/win-x86-Release/v142/librdkafkacpp.lib']
         ]
 
         for m in mappings:
@@ -612,16 +628,17 @@ class NugetPackage (Package):
             "build/native/include/librdkafka/rdkafka.h",
             "build/native/include/librdkafka/rdkafkacpp.h",
             "build/native/include/librdkafka/rdkafka_mock.h",
-            "build/native/lib/win/x64/win-x64-Release/v140/librdkafka.lib",
-            "build/native/lib/win/x64/win-x64-Release/v140/librdkafkacpp.lib",
-            "build/native/lib/win/x86/win-x86-Release/v140/librdkafka.lib",
-            "build/native/lib/win/x86/win-x86-Release/v140/librdkafkacpp.lib",
+            "build/native/lib/win/x64/win-x64-Release/v142/librdkafka.lib",
+            "build/native/lib/win/x64/win-x64-Release/v142/librdkafkacpp.lib",
+            "build/native/lib/win/x86/win-x86-Release/v142/librdkafka.lib",
+            "build/native/lib/win/x86/win-x86-Release/v142/librdkafkacpp.lib",
             "runtimes/linux-x64/native/centos7-librdkafka.so",
             "runtimes/linux-x64/native/centos6-librdkafka.so",
             "runtimes/linux-x64/native/alpine-librdkafka.so",
             "runtimes/linux-x64/native/librdkafka.so",
             "runtimes/linux-arm64/native/librdkafka.so",
             "runtimes/osx-x64/native/librdkafka.dylib",
+            "runtimes/osx-arm64/native/librdkafka.dylib",
             # win x64
             "runtimes/win-x64/native/librdkafka.dll",
             "runtimes/win-x64/native/librdkafkacpp.dll",
@@ -631,6 +648,7 @@ class NugetPackage (Package):
             "runtimes/win-x64/native/libssl-1_1-x64.dll",
             "runtimes/win-x64/native/zlib1.dll",
             "runtimes/win-x64/native/zstd.dll",
+            "runtimes/win-x64/native/libcurl.dll",
             # win x86
             "runtimes/win-x86/native/librdkafka.dll",
             "runtimes/win-x86/native/librdkafkacpp.dll",
@@ -639,7 +657,8 @@ class NugetPackage (Package):
             "runtimes/win-x86/native/libcrypto-1_1.dll",
             "runtimes/win-x86/native/libssl-1_1.dll",
             "runtimes/win-x86/native/zlib1.dll",
-            "runtimes/win-x86/native/zstd.dll"]
+            "runtimes/win-x86/native/zstd.dll",
+            "runtimes/win-x86/native/libcurl.dll"]
 
         missing = list()
         with zfile.ZFile(path, 'r') as zf:
@@ -716,15 +735,25 @@ class StaticPackage (Package):
              'rdkafka-static.pc',
              'librdkafka_musl_linux.pc'],
 
-            # osx static lib and pkg-config file
-            [{'arch': 'x64',
-              'plat': 'osx',
-              'fname_glob': 'librdkafka-clang.tar.gz'},
-             './lib/librdkafka-static.a',
-             'librdkafka_darwin.a'],
+            # osx x64 static lib and pkg-config file
             [{'arch': 'x64', 'plat': 'osx',
               'fname_glob': 'librdkafka-clang.tar.gz'},
-                './lib/pkgconfig/rdkafka-static.pc', 'librdkafka_darwin.pc'],
+             './lib/librdkafka-static.a',
+             'librdkafka_darwin_amd64.a'],
+            [{'arch': 'x64', 'plat': 'osx',
+              'fname_glob': 'librdkafka-clang.tar.gz'},
+             './lib/pkgconfig/rdkafka-static.pc',
+             'librdkafka_darwin_amd64.pc'],
+
+            # osx arm64 static lib and pkg-config file
+            [{'arch': 'arm64', 'plat': 'osx',
+              'fname_glob': 'librdkafka-gcc.tar.gz'},
+             './lib/librdkafka-static.a',
+             'librdkafka_darwin_arm64.a'],
+            [{'arch': 'arm64', 'plat': 'osx',
+              'fname_glob': 'librdkafka-gcc.tar.gz'},
+             './lib/pkgconfig/rdkafka-static.pc',
+             'librdkafka_darwin_arm64.pc'],
 
             # win static lib and pkg-config file (mingw)
             [{'arch': 'x64', 'plat': 'win',
@@ -801,8 +830,10 @@ class StaticPackage (Package):
             "./librdkafka_glibc_linux.pc",
             "./librdkafka_musl_linux.a",
             "./librdkafka_musl_linux.pc",
-            "./librdkafka_darwin.a",
-            "./librdkafka_darwin.pc",
+            "./librdkafka_darwin_amd64.a",
+            "./librdkafka_darwin_arm64.a",
+            "./librdkafka_darwin_amd64.pc",
+            "./librdkafka_darwin_arm64.pc",
             "./librdkafka_windows.a",
             "./librdkafka_windows.pc"]
 

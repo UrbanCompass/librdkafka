@@ -2666,8 +2666,8 @@ static void do_test_topic_disappears_for_awhile(void) {
         SUB_TEST_QUICK();
 
         rk = create_txn_producer(
-            &mcluster, txnid, 1, NULL, "batch.num.messages", "3", "linger.ms",
-            "100", "topic.metadata.refresh.interval.ms", "2000", NULL);
+            &mcluster, txnid, 1, "batch.num.messages", "3", "linger.ms", "100",
+            "topic.metadata.refresh.interval.ms", "2000", NULL);
 
         rd_kafka_mock_topic_create(mcluster, topic, partition_cnt, 1);
 
@@ -2742,6 +2742,131 @@ static void do_test_topic_disappears_for_awhile(void) {
 }
 
 
+/**
+ * @brief Test that group coordinator requests can handle an
+ *        untimely disconnect.
+ *
+ * The transaction manager makes use of librdkafka coord_req to commit
+ * transaction offsets to the group coordinator.
+ * If the connection to the given group coordinator is not up the
+ * coord_req code will request a connection once, but if this connection fails
+ * there will be no new attempts and the coord_req will idle until either
+ * destroyed or the connection is retried for other reasons.
+ * This in turn stalls the send_offsets_to_transaction() call until the
+ * transaction times out.
+ *
+ * There are two variants to this test based on switch_coord:
+ *  - True - Switches the coordinator during the downtime.
+ *           The client should detect this and send the request to the
+ *           new coordinator.
+ *  - False - The coordinator remains on the down broker. Client will reconnect
+ *            when down broker comes up again.
+ */
+struct some_state {
+        rd_kafka_mock_cluster_t *mcluster;
+        rd_bool_t switch_coord;
+        int32_t broker_id;
+        const char *grpid;
+};
+
+static int delayed_up_cb(void *arg) {
+        struct some_state *state = arg;
+        rd_sleep(3);
+        if (state->switch_coord) {
+                TEST_SAY("Switching group coordinator to %" PRId32 "\n",
+                         state->broker_id);
+                rd_kafka_mock_coordinator_set(state->mcluster, "group",
+                                              state->grpid, state->broker_id);
+        } else {
+                TEST_SAY("Bringing up group coordinator %" PRId32 "..\n",
+                         state->broker_id);
+                rd_kafka_mock_broker_set_up(state->mcluster, state->broker_id);
+        }
+        return 0;
+}
+
+static void do_test_disconnected_group_coord(rd_bool_t switch_coord) {
+        const char *topic       = "mytopic";
+        const char *txnid       = "myTxnId";
+        const char *grpid       = "myGrpId";
+        const int partition_cnt = 1;
+        rd_kafka_t *rk;
+        rd_kafka_mock_cluster_t *mcluster;
+        rd_kafka_topic_partition_list_t *offsets;
+        rd_kafka_consumer_group_metadata_t *cgmetadata;
+        struct some_state state = RD_ZERO_INIT;
+        test_timing_t timing;
+        thrd_t thrd;
+        int ret;
+
+        SUB_TEST_QUICK("switch_coord=%s", RD_STR_ToF(switch_coord));
+
+        test_curr->is_fatal_cb = error_is_fatal_cb;
+        allowed_error          = RD_KAFKA_RESP_ERR__TRANSPORT;
+
+        rk = create_txn_producer(&mcluster, txnid, 3, NULL);
+
+        rd_kafka_mock_topic_create(mcluster, topic, partition_cnt, 1);
+
+        /* Broker 1: txn coordinator
+         * Broker 2: group coordinator
+         * Broker 3: partition leader & backup coord if switch_coord=true */
+        rd_kafka_mock_coordinator_set(mcluster, "transaction", txnid, 1);
+        rd_kafka_mock_coordinator_set(mcluster, "group", grpid, 2);
+        rd_kafka_mock_partition_set_leader(mcluster, topic, 0, 3);
+
+        /* Bring down group coordinator so there are no undesired
+         * connections to it. */
+        rd_kafka_mock_broker_set_down(mcluster, 2);
+
+        TEST_CALL_ERROR__(rd_kafka_init_transactions(rk, -1));
+        TEST_CALL_ERROR__(rd_kafka_begin_transaction(rk));
+        TEST_CALL_ERR__(rd_kafka_producev(
+            rk, RD_KAFKA_V_TOPIC(topic), RD_KAFKA_V_PARTITION(0),
+            RD_KAFKA_V_VALUE("hi", 2), RD_KAFKA_V_END));
+        test_flush(rk, -1);
+
+        rd_sleep(1);
+
+        /* Run a background thread that after 3s, which should be enough
+         * to perform the first failed connection attempt, makes the
+         * group coordinator available again. */
+        state.switch_coord = switch_coord;
+        state.mcluster     = mcluster;
+        state.grpid        = grpid;
+        state.broker_id    = switch_coord ? 3 : 2;
+        thrd_create(&thrd, delayed_up_cb, &state);
+
+        TEST_SAY("Calling send_offsets_to_transaction()\n");
+        offsets = rd_kafka_topic_partition_list_new(1);
+        rd_kafka_topic_partition_list_add(offsets, topic, 0)->offset = 1;
+        cgmetadata = rd_kafka_consumer_group_metadata_new(grpid);
+
+        TIMING_START(&timing, "send_offsets_to_transaction(-1)");
+        TEST_CALL_ERROR__(
+            rd_kafka_send_offsets_to_transaction(rk, offsets, cgmetadata, -1));
+        TIMING_STOP(&timing);
+        TIMING_ASSERT(&timing, 0, 10 * 1000 /*10s*/);
+
+        rd_kafka_consumer_group_metadata_destroy(cgmetadata);
+        rd_kafka_topic_partition_list_destroy(offsets);
+        thrd_join(thrd, &ret);
+
+        /* Commit the transaction */
+        TIMING_START(&timing, "commit_transaction(-1)");
+        TEST_CALL_ERROR__(rd_kafka_commit_transaction(rk, -1));
+        TIMING_STOP(&timing);
+
+        rd_kafka_destroy(rk);
+
+        allowed_error          = RD_KAFKA_RESP_ERR_NO_ERROR;
+        test_curr->is_fatal_cb = NULL;
+
+        SUB_TEST_PASS();
+}
+
+
+
 int main_0105_transactions_mock(int argc, char **argv) {
         if (test_needs_auth()) {
                 TEST_SKIP("Mock cluster does not support SSL/SASL\n");
@@ -2814,6 +2939,10 @@ int main_0105_transactions_mock(int argc, char **argv) {
         do_test_out_of_order_seq();
 
         do_test_topic_disappears_for_awhile();
+
+        do_test_disconnected_group_coord(rd_false);
+
+        do_test_disconnected_group_coord(rd_true);
 
         return 0;
 }

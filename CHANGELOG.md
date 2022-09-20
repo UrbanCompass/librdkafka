@@ -1,3 +1,23 @@
+# librdkafka v1.9.2
+
+librdkafka v1.9.2 is a maintenance release:
+
+ * The SASL OAUTHBEAR OIDC POST field was sometimes truncated by one byte (#3192).
+ * The bundled version of OpenSSL has been upgraded to version 1.1.1q for non-Windows builds. Windows builds remain on OpenSSL 1.1.1n for the time being.
+ * The bundled version of Curl has been upgraded to version 7.84.0.
+
+
+
+# librdkafka v1.9.1
+
+librdkafka v1.9.1 is a maintenance release:
+
+ * The librdkafka.redist NuGet package now contains OSX M1/arm64 builds.
+ * Self-contained static libraries can now be built on OSX M1 too, thanks to
+   disabling curl's configure runtime check.
+
+
+
 # librdkafka v1.9.0
 
 librdkafka v1.9.0 is a feature release:
@@ -33,6 +53,17 @@ librdkafka v1.9.0 is a feature release:
  * Windows: Added native Win32 IO/Queue scheduling. This removes the
    internal TCP loopback connections that were previously used for timely
    queue wakeups.
+ * Added `socket.connection.setup.timeout.ms` (default 30s).
+   The maximum time allowed for broker connection setups (TCP connection as
+   well as SSL and SASL handshakes) is now limited to this value.
+   This fixes the issue with stalled broker connections in the case of network
+   or load balancer problems.
+   The Java clients has an exponential backoff to this timeout which is
+   limited by `socket.connection.setup.timeout.max.ms` - this was not
+   implemented in librdkafka due to differences in connection handling and
+   `ERR__ALL_BROKERS_DOWN` error reporting. Having a lower initial connection
+   setup timeout and then increase the timeout for the next attempt would
+   yield possibly false-positive `ERR__ALL_BROKERS_DOWN` too early.
  * SASL OAUTHBEARER refresh callbacks can now be scheduled for execution
    on librdkafka's background thread. This solves the problem where an
    application has a custom SASL OAUTHBEARER refresh callback and thus needs to
@@ -43,6 +74,9 @@ librdkafka v1.9.0 is a feature release:
    can now be triggered automatically on the librdkafka background thread.
  * `rd_kafka_queue_get_background()` now creates the background thread
    if not already created.
+ * Added `rd_kafka_consumer_close_queue()` and `rd_kafka_consumer_closed()`.
+   This allow applications and language bindings to implement asynchronous
+   consumer close.
  * Bundled zlib upgraded to version 1.2.12.
  * Bundled OpenSSL upgraded to 1.1.1n.
  * Added `test.mock.broker.rtt` to simulate RTT/latency for mock brokers.
@@ -61,11 +95,32 @@ librdkafka v1.9.0 is a feature release:
    was configured.
    This regression was introduced in v1.8.0 due to use of vcpkgs and how
    keystore file was read. #3554.
+ * Windows 32-bit only: 64-bit atomic reads were in fact not atomic and could
+   in rare circumstances yield incorrect values.
+   One manifestation of this issue was the `max.poll.interval.ms` consumer
+   timer expiring even though the application was polling according to profile.
+   Fixed by @WhiteWind (#3815).
  * `rd_kafka_clusterid()` would previously fail with timeout if
    called on cluster with no visible topics (#3620).
    The clusterid is now returned as soon as metadata has been retrieved.
  * Fix hang in `rd_kafka_list_groups()` if there are no available brokers
    to connect to (#3705).
+ * Millisecond timeouts (`timeout_ms`) in various APIs, such as `rd_kafka_poll()`,
+   was limited to roughly 36 hours before wrapping. (#3034)
+ * If a metadata request triggered by `rd_kafka_metadata()` or consumer group rebalancing
+   encountered a non-retriable error it would not be propagated to the caller and thus
+   cause a stall or timeout, this has now been fixed. (@aiquestion, #3625)
+ * AdminAPI `DeleteGroups()` and `DeleteConsumerGroupOffsets()`:
+   if the given coordinator connection was not up by the time these calls were
+   initiated and the first connection attempt failed then no further connection
+   attempts were performed, ulimately leading to the calls timing out.
+   This is now fixed by keep retrying to connect to the group coordinator
+   until the connection is successful or the call times out.
+   Additionally, the coordinator will be now re-queried once per second until
+   the coordinator comes up or the call times out, to detect change in
+   coordinators.
+ * Mock cluster `rd_kafka_mock_broker_set_down()` would previously
+   accept and then disconnect new connections, it now refuses new connections.
 
 
 ### Consumer fixes
@@ -75,6 +130,11 @@ librdkafka v1.9.0 is a feature release:
    See **Upgrade considerations** above for more information.
  * `rd_kafka_*assign()` will now reset/clear the stored offset.
    See **Upgrade considerations** above for more information.
+ * `seek()` followed by `pause()` would overwrite the seeked offset when
+   later calling `resume()`. This is now fixed. (#3471).
+   **Note**: Avoid storing offsets (`offsets_store()`) after calling
+   `seek()` as this may later interfere with resuming a paused partition,
+   instead store offsets prior to calling seek.
  * A `ERR_MSG_SIZE_TOO_LARGE` consumer error would previously be raised
    if the consumer received a maximum sized FetchResponse only containing
    (transaction) aborted messages with no control messages. The fetching did
@@ -91,9 +151,16 @@ librdkafka v1.9.0 is a feature release:
  * Fix crash (`cant handle op type`) when using `consume_batch_queue()` (et.al)
    and an OAUTHBEARER refresh callback was set.
    The callback is now triggered by the consume call. (#3263)
+ * Fix `partition.assignment.strategy` ordering when multiple strategies are configured.
+   If there is more than one eligible strategy, preference is determined by the
+   configured order of strategies. The partitions are assigned to group members according
+   to the strategy order preference now. (#3818)
+ * Any form of unassign*() (absolute or incremental) is now allowed during
+   consumer close rebalancing and they're all treated as absolute unassigns.
+   (@kevinconaway)
 
 
-### Producer fixes
+### Transactional producer fixes
 
  * Fix message loss in idempotent/transactional producer.
    A corner case has been identified that may cause idempotent/transactional
@@ -127,6 +194,20 @@ librdkafka v1.9.0 is a feature release:
    broker (added in Apache Kafka 2.8), which could cause the producer to
    seemingly hang.
    This error code is now correctly handled by raising a fatal error.
+ * If the given group coordinator connection was not up by the time
+   `send_offsets_to_transactions()` was called, and the first connection
+   attempt failed then no further connection attempts were performed, ulimately
+   leading to `send_offsets_to_transactions()` timing out, and possibly
+   also the transaction timing out on the transaction coordinator.
+   This is now fixed by keep retrying to connect to the group coordinator
+   until the connection is successful or the call times out.
+   Additionally, the coordinator will be now re-queried once per second until
+   the coordinator comes up or the call times out, to detect change in
+   coordinators.
+
+
+### Producer fixes
+
  * Improved producer queue wakeup scheduling. This should significantly
    decrease the number of wakeups and thus syscalls for high message rate
    producers. (#3538, #2912)
