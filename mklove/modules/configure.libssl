@@ -29,9 +29,14 @@ function manual_checks {
     if [[ $MKL_SOURCE_DEPS_ONLY != y && $MKL_DISTRO == "osx" ]]; then
         # Add brew's OpenSSL pkg-config path on OSX
         # to avoid picking up the outdated system-provided openssl/libcrypto.
-        mkl_env_append PKG_CONFIG_PATH "/usr/local/opt/openssl/lib/pkgconfig" ":"
+        # (david) asdfolkajsdfglkajHSG
+        #mkl_env_append PKG_CONFIG_PATH "/usr/local/opt/openssl/lib/pkgconfig" ":"
 	# and similar path for M1 brew location
         mkl_env_append PKG_CONFIG_PATH "/opt/homebrew/opt/openssl/lib/pkgconfig" ":"
+        mkl_env_append PKG_CONFIG_PATH "/opt/homebrew/opt/curl/lib/pkgconfig" ":"
+        mkl_env_append PKG_CONFIG_PATH "/opt/homebrew/opt/cyrus-sasl/2.1.28_2/lib/pkgconfig" ":"
+        mkl_env_append PKG_CONFIG_PATH "/opt/homebrew/opt/libxml2/2.12.8/lib/pkgconfig" ":"
+        mkl_env_append PKG_CONFIG_PATH "/opt/homebrew/opt/lz4/1.9.4/lib/pkgconfig" ":"
     fi
 
     # OpenSSL provides both libcrypto and libssl

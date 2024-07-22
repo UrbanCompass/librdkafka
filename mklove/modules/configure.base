@@ -871,6 +871,8 @@ function mkl_generate_libs {
 function mkl_generate {
 
     # Generate MKL_STATIC_LIBS and MKL_DYNAMIC_LIBS from LIBS
+    echo "these are the LIBS: $LIBS"
+    env
     mkl_generate_libs $LIBS
 
     local mf=
